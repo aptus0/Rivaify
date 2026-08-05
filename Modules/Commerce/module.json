@@ -1,0 +1,11 @@
+{
+    "name": "Commerce",
+    "alias": "commerce",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Commerce\\Providers\\CommerceServiceProvider"
+    ],
+    "files": []
+}
