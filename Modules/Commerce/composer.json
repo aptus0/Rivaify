@@ -1,0 +1,30 @@
+{
+    "name": "nwidart/commerce",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Commerce\\": "app/",
+            "Modules\\Commerce\\Database\\Factories\\": "database/factories/",
+            "Modules\\Commerce\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Commerce\\Tests\\": "tests/"
+        }
+    }
+}
