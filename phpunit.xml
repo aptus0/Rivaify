@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <php>
+        <!-- force="true" on every entry: this container's real environment
+             (compose.yaml's env_file: .env) already sets APP_ENV=production
+             and friends before PHP even starts. Without force, PHPUnit's
+             <env> is a no-op whenever the variable already exists — which
+             silently left tests running as APP_ENV=production (CSRF
+             enforced, real Redis queue/cache/session) instead of what this
+             file claims. Discovered via a 419 on Fortify's /register route
+             in a feature test; don't remove `force` again. -->
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file" force="true"/>
+        <env name="BCRYPT_ROUNDS" value="4" force="true"/>
+        <env name="BROADCAST_CONNECTION" value="null" force="true"/>
+        <env name="CACHE_STORE" value="array" force="true"/>
+        <!-- pdo_sqlite isn't installed in the app image (docker/php/Dockerfile
+             only installs pdo_pgsql), so tests run against the real Postgres
+             connection instead. DB_HOST/PORT/DATABASE/USERNAME/PASSWORD are
+             deliberately NOT overridden here — they fall through to the
+             container's actual environment (.env), so no credentials need to
+             live in this file. Tests use DatabaseTransactions (not
+             RefreshDatabase), so schema is never touched. -->
+        <env name="DB_CONNECTION" value="pgsql" force="true"/>
+        <env name="DB_URL" value="" force="true"/>
+        <env name="MAIL_MAILER" value="array" force="true"/>
+        <env name="QUEUE_CONNECTION" value="sync" force="true"/>
+        <env name="SESSION_DRIVER" value="array" force="true"/>
+        <env name="PULSE_ENABLED" value="false" force="true"/>
+        <env name="TELESCOPE_ENABLED" value="false" force="true"/>
+        <env name="NIGHTWATCH_ENABLED" value="false" force="true"/>
+    </php>
+</phpunit>
