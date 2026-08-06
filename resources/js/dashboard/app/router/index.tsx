@@ -1,11 +1,14 @@
 import { createBrowserRouter } from 'react-router-dom';
-import { CenteredLayout } from '../layouts/CenteredLayout';
+import { AppLayout } from '../layouts/AppLayout';
+import { GuestLayout } from '../layouts/GuestLayout';
+import { OnboardingLayout } from '../layouts/OnboardingLayout';
 import { RequireAuth } from './RequireAuth';
 import { RootRedirect } from './RootRedirect';
 import { LoginPage } from '../../features/auth/pages/LoginPage';
 import { RegisterPage } from '../../features/auth/pages/RegisterPage';
 import { VerifyEmailPage } from '../../features/auth/pages/VerifyEmailPage';
 import { OnboardingPage } from '../../features/onboarding/pages/OnboardingPage';
+import { DashboardPage } from '../../features/dashboard/pages/DashboardPage';
 
 // basename: '/app' — this repo currently serves the merchant dashboard SPA
 // under a path prefix on the same host as the landing page, since local
@@ -17,46 +20,53 @@ export const router = createBrowserRouter(
     {
       path: '/',
       element: (
-        <CenteredLayout>
-          <RequireAuth>
-            <RootRedirect />
-          </RequireAuth>
-        </CenteredLayout>
+        <RequireAuth>
+          <RootRedirect />
+        </RequireAuth>
       ),
     },
     {
       path: '/login',
       element: (
-        <CenteredLayout>
+        <GuestLayout>
           <LoginPage />
-        </CenteredLayout>
+        </GuestLayout>
       ),
     },
     {
       path: '/register',
       element: (
-        <CenteredLayout>
+        <GuestLayout>
           <RegisterPage />
-        </CenteredLayout>
+        </GuestLayout>
       ),
     },
     {
       path: '/verify-email',
       element: (
-        <CenteredLayout>
+        <GuestLayout>
           <VerifyEmailPage />
-        </CenteredLayout>
+        </GuestLayout>
       ),
     },
     {
       path: '/onboarding',
       element: (
-        <CenteredLayout>
-          <RequireAuth>
+        <RequireAuth>
+          <OnboardingLayout>
             <OnboardingPage />
-          </RequireAuth>
-        </CenteredLayout>
+          </OnboardingLayout>
+        </RequireAuth>
       ),
+    },
+    {
+      path: '/dashboard',
+      element: (
+        <RequireAuth>
+          <AppLayout />
+        </RequireAuth>
+      ),
+      children: [{ index: true, element: <DashboardPage /> }],
     },
   ],
   { basename: '/app' },

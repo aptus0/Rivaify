@@ -20,6 +20,7 @@ export interface CurrentUser {
 export interface CurrentStoreSummary {
   id: string;
   name: string;
+  slug: string;
   status: StoreStatus;
   onboarding_status: OnboardingStatus;
   onboarding_step: number;

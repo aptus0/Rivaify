@@ -1,6 +1,5 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
-import { DashboardPage } from '../../features/dashboard/pages/DashboardPage';
 
 /** "/" resolves to onboarding or the dashboard depending on how far the
  * merchant has gotten — see docs/ARCHITECTURE.md's onboarding state
@@ -15,5 +14,5 @@ export function RootRedirect() {
     return <Navigate to="/onboarding" replace />;
   }
 
-  return <DashboardPage />;
+  return <Navigate to="/dashboard" replace />;
 }

@@ -26,6 +26,7 @@ Route::get('/me', function (Request $request) {
             'store' => $store ? [
                 'id' => $store->ulid,
                 'name' => $store->name,
+                'slug' => $store->slug,
                 'status' => $store->status->value,
                 'onboarding_status' => $store->onboarding_status->value,
                 'onboarding_step' => $store->onboarding_status->step(),
