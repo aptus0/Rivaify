@@ -1,5 +1,5 @@
 import { Heart, Minus, Plus, Search, ShoppingBag } from 'lucide-react';
-import { AuraCard } from '../../effects/AuraCard';
+import { RivaCard } from '../../effects/RivaCard';
 import { Reveal } from '../../effects/Reveal';
 import { Container } from '../../ui/Container';
 import { SectionHeading } from '../../ui/SectionHeading';
@@ -7,12 +7,12 @@ import { SectionHeading } from '../../ui/SectionHeading';
 function PhoneFrame({ children, label }: { children: React.ReactNode; label: string }) {
   return (
     <div className="flex flex-col items-center">
-      <AuraCard intensity="subtle" className="rounded-[2rem]">
+      <RivaCard variant="spectrum" intensity="subtle" className="rounded-[2rem]">
         <div className="h-[420px] w-[210px] overflow-hidden rounded-[2rem] border-4 border-dark bg-white shadow-[0_30px_60px_-24px_rgba(13,17,23,0.35)]">
           <div className="mx-auto mt-2 h-1.5 w-16 rounded-full bg-dark/10" />
           <div className="h-full overflow-hidden px-3 pb-4 pt-2">{children}</div>
         </div>
-      </AuraCard>
+      </RivaCard>
       <p className="mt-4 text-sm font-semibold text-white/60">{label}</p>
     </div>
   );

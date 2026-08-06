@@ -1,8 +1,7 @@
 import { TrendingUp } from 'lucide-react';
-import { AuraCard } from '../../effects/AuraCard';
+import { RivaCard } from '../../effects/RivaCard';
 import { Reveal } from '../../effects/Reveal';
 import { Container } from '../../ui/Container';
-import { SectionHeading } from '../../ui/SectionHeading';
 
 const STATS = [
   { label: 'Net Satış', value: '₺184.920', delta: '+18,4%' },
@@ -59,17 +58,7 @@ export function Analytics() {
   return (
     <section id="analitik" className="px-6 py-24 lg:px-8 lg:py-32">
       <Container>
-        <SectionHeading
-          title={
-            <>
-              Veriye bakma.
-              <br />
-              <span className="text-primary">Ne olduğunu anla.</span>
-            </>
-          }
-        />
-
-        <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {STATS.map((stat) => (
             <Reveal key={stat.label}>
               <div className="rounded-2xl border border-dark/[0.07] bg-white p-5">
@@ -82,7 +71,7 @@ export function Analytics() {
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <AuraCard intensity="subtle" className="rounded-2xl lg:col-span-2">
+          <RivaCard variant="spectrum" intensity="subtle" className="rounded-2xl lg:col-span-2">
             <div className="rounded-2xl border border-dark/[0.07] bg-white p-6">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-dark/60">Gelir trendi</p>
@@ -92,7 +81,7 @@ export function Analytics() {
                 <LineChart />
               </div>
             </div>
-          </AuraCard>
+          </RivaCard>
 
           <div className="flex flex-col gap-4">
             <Reveal>

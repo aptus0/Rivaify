@@ -1,9 +1,8 @@
 import { ArrowRight } from 'lucide-react';
-import { AuraCard } from '../../effects/AuraCard';
+import { RivaCard } from '../../effects/RivaCard';
 import { Reveal } from '../../effects/Reveal';
 import { Button } from '../../ui/Button';
 import { Container } from '../../ui/Container';
-import { SectionHeading } from '../../ui/SectionHeading';
 import { REGISTER_URL } from '../../../constants/site';
 
 interface StoreTheme {
@@ -18,13 +17,15 @@ const STORE_THEMES: StoreTheme[] = [
   { name: 'Studio', category: 'Minimal', accent: '#3A3A3A', bg: '#F6F6F5' },
   { name: 'Aura', category: 'Beauty', accent: '#FF6B00', bg: '#FFF3E8' },
   { name: 'Mono', category: 'Electronics', accent: '#0D1117', bg: '#EFEFEF' },
-  { name: 'Pulse', category: 'Market', accent: '#7C5CFC', bg: '#F3F0FF' },
-  { name: 'Market', category: 'Market', accent: '#2DD4BF', bg: '#EAFBF8' },
+  { name: 'Pulse', category: 'Market', accent: '#7957FF', bg: '#F3F0FF' },
+  { name: 'Market', category: 'Market', accent: '#20C7C7', bg: '#EAFBF8' },
+  { name: 'Flux', category: 'Electronics', accent: '#3182FF', bg: '#EEF4FF' },
+  { name: 'Editorial', category: 'Fashion', accent: '#111318', bg: '#F5F3F0' },
 ];
 
 function ThemeCard({ theme }: { theme: StoreTheme }) {
   return (
-    <AuraCard intensity="medium" className="rounded-2xl">
+    <RivaCard variant="spectrum" intensity="medium" className="rounded-2xl">
       <div className="group overflow-hidden rounded-2xl border border-dark/[0.07] bg-white transition-transform duration-300 hover:-translate-y-1 hover:scale-[1.01]">
         <div className="flex h-40 items-end gap-3 p-4" style={{ backgroundColor: theme.bg }}>
           <div className="flex-1">
@@ -56,7 +57,7 @@ function ThemeCard({ theme }: { theme: StoreTheme }) {
           <span className="h-3 w-3 rounded-full" style={{ backgroundColor: theme.accent }} aria-hidden="true" />
         </div>
       </div>
-    </AuraCard>
+    </RivaCard>
   );
 }
 
@@ -64,21 +65,7 @@ export function ThemeShowcase() {
   return (
     <section id="temalar" className="bg-surface px-6 py-24 lg:px-8 lg:py-32">
       <Container>
-        <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
-          <SectionHeading
-            align="left"
-            title={
-              <>
-                Her marka farklı.
-                <br />
-                <span className="text-primary">Mağazası da öyle olmalı.</span>
-              </>
-            }
-            description="Profesyonel ve dönüşüm odaklı Rivaify temalarıyla mağazanı dakikalar içinde yayına hazırla."
-          />
-        </div>
-
-        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {STORE_THEMES.map((theme) => (
             <ThemeCard key={theme.name} theme={theme} />
           ))}

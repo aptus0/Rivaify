@@ -1,5 +1,5 @@
 import { ArrowRight, Globe, ShieldCheck, Zap } from 'lucide-react';
-import { AuraCard } from '../../effects/AuraCard';
+import { RivaCard } from '../../effects/RivaCard';
 import { Badge } from '../../ui/Badge';
 import { Container } from '../../ui/Container';
 import { SectionHeading } from '../../ui/SectionHeading';
@@ -24,7 +24,7 @@ export function CustomDomain() {
           }
         />
 
-        <AuraCard intensity="medium" className="mt-12 rounded-2xl">
+        <RivaCard variant="spectrum" intensity="medium" className="mt-12 rounded-2xl">
           <div className="rounded-2xl border border-dark/[0.07] bg-white p-8 text-center">
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
               <span className="rounded-lg bg-surface px-4 py-2 font-mono text-sm text-dark/50">
@@ -49,7 +49,7 @@ export function CustomDomain() {
               ))}
             </div>
           </div>
-        </AuraCard>
+        </RivaCard>
       </Container>
     </section>
   );
