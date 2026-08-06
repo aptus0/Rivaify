@@ -10,11 +10,10 @@ import { VerifyEmailPage } from '../../features/auth/pages/VerifyEmailPage';
 import { OnboardingPage } from '../../features/onboarding/pages/OnboardingPage';
 import { DashboardPage } from '../../features/dashboard/pages/DashboardPage';
 
-// basename: '/app' — this repo currently serves the merchant dashboard SPA
-// under a path prefix on the same host as the landing page, since local
-// dev has no app.rivaify.com DNS entry. In production this becomes its
-// own subdomain (brief §11) and basename reverts to '/'; see
-// docs/ARCHITECTURE.md for the target domain split.
+// Served on its own host (app.rivaify.com, brief §11) via Route::domain()
+// in routes/web.php — no path prefix, so basename is just '/'. Requires a
+// DNS/hosts entry for app.rivaify.com pointing at this server; visiting by
+// bare IP/localhost hits the marketing site instead (see routes/web.php).
 export const router = createBrowserRouter(
   [
     {
@@ -69,5 +68,5 @@ export const router = createBrowserRouter(
       children: [{ index: true, element: <DashboardPage /> }],
     },
   ],
-  { basename: '/app' },
+  { basename: '/' },
 );
