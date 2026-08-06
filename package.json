@@ -19,6 +19,7 @@
         "vite": "^8.0.0"
     },
     "dependencies": {
+        "@inertiajs/react": "^3.6.1",
         "@tiptap/extension-link": "^3.29.2",
         "@tiptap/react": "^3.29.2",
         "@tiptap/starter-kit": "^3.29.2",

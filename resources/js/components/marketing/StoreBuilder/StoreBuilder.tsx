@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Reorder } from 'framer-motion';
 import { GripVertical, Laptop, Smartphone, Tablet, type LucideIcon } from 'lucide-react';
-import { AuraCard } from '../../effects/AuraCard';
+import { RivaCard } from '../../effects/RivaCard';
 import { Container } from '../../ui/Container';
-import { SectionHeading } from '../../ui/SectionHeading';
 import { StorePreview } from './StorePreview';
 
 interface BuilderSection {
@@ -44,17 +43,7 @@ export function StoreBuilder() {
   return (
     <section id="magaza-olusturucu" className="px-6 py-24 lg:px-8 lg:py-32">
       <Container size="wide">
-        <SectionHeading
-          title={
-            <>
-              Kod yazmadan,
-              <br />
-              <span className="text-primary">markana ait bir mağaza oluştur.</span>
-            </>
-          }
-        />
-
-        <AuraCard intensity="medium" className="mt-12 rounded-2xl">
+        <RivaCard variant="spectrum" intensity="medium" className="rounded-2xl">
           <div className="grid grid-cols-1 gap-4 rounded-2xl border border-dark/[0.07] bg-white p-4 lg:grid-cols-[220px_1fr_220px] lg:p-6">
             <div>
               <p className="px-1 text-[11px] font-bold uppercase tracking-wider text-dark/35">Bölümler</p>
@@ -138,7 +127,7 @@ export function StoreBuilder() {
               </div>
             </div>
           </div>
-        </AuraCard>
+        </RivaCard>
       </Container>
     </section>
   );

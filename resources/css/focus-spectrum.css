@@ -1,0 +1,336 @@
+/*
+ * Rivaify Focus Spectrum — shared CSS infrastructure for the signature
+ * pointer-reactive effect system (RivaCard / MovingBorder / PointerGlow /
+ * FocusCorners / Spotlight — see resources/js/components/effects).
+ *
+ * Two independent layers per card, both pure CSS (no per-frame JS):
+ *  1. `.riva-card::before` — a crisp rotating conic-gradient ring, carved
+ *     into a ring shape via the standard padding + exclude-mask technique.
+ *     Its shape doesn't depend on pointer position — gating that ring's own
+ *     mask by proximity breaks the exclude-mask math (verified while
+ *     building the previous pass of this system: overriding mask-image
+ *     alone while keeping mask-composite: exclude reveals the whole card
+ *     interior far from the pointer instead of hiding it), so pointer-
+ *     reactivity lives entirely in layer 2.
+ *  2. `.riva-card::after` — a heavily blurred halo positioned at
+ *     var(--pointer-x)/var(--pointer-y), updated only while the pointer is
+ *     inside the element (usePointerPosition.ts) — this is what "follows"
+ *     the cursor.
+ */
+
+@property --spectrum-angle {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
+}
+
+:root {
+    --spectrum-orange: #ff6b00;
+    --spectrum-magenta: #ff3d81;
+    --spectrum-purple: #7957ff;
+    --spectrum-blue: #3182ff;
+    --spectrum-cyan: #20c7c7;
+    --spectrum-conic: conic-gradient(
+        from var(--spectrum-angle),
+        var(--spectrum-orange),
+        var(--spectrum-magenta),
+        var(--spectrum-purple),
+        var(--spectrum-blue),
+        var(--spectrum-cyan),
+        var(--spectrum-orange)
+    );
+}
+
+@keyframes spectrum-rotate {
+    to {
+        --spectrum-angle: 360deg;
+    }
+}
+
+@keyframes spectrum-scan {
+    0% {
+        transform: translateY(-110%);
+        opacity: 0;
+    }
+    15% {
+        opacity: 1;
+    }
+    85% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(110%);
+        opacity: 0;
+    }
+}
+
+@keyframes spectrum-float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+@keyframes spectrum-corner-in {
+    from {
+        opacity: 0;
+        transform: translate(var(--corner-from-x, 0), var(--corner-from-y, 0));
+    }
+    to {
+        opacity: 1;
+        transform: translate(0, 0);
+    }
+}
+
+.riva-card {
+    position: relative;
+    isolation: isolate;
+}
+
+/* Layer 1: crisp rotating ring. */
+.riva-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--spectrum-conic);
+    animation: spectrum-rotate 8s linear infinite paused;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+/* Layer 2: soft blurred halo that tracks the pointer, sitting outside the card. */
+.riva-card::after {
+    content: '';
+    position: absolute;
+    inset: -40px;
+    z-index: -1;
+    border-radius: inherit;
+    background: radial-gradient(
+        280px circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+        color-mix(in srgb, var(--spectrum-orange) 70%, transparent),
+        color-mix(in srgb, var(--spectrum-purple) 55%, transparent) 45%,
+        transparent 72%
+    );
+    filter: blur(48px);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+}
+
+.riva-card:hover::before,
+.riva-card--active::before {
+    opacity: var(--riva-card-opacity, 1);
+    animation-play-state: running;
+}
+
+.riva-card:hover::after,
+.riva-card--active::after {
+    opacity: var(--riva-card-halo-opacity, 0.5);
+}
+
+.riva-card--ambient::before {
+    opacity: var(--riva-card-ambient-opacity, 0.55);
+    animation-play-state: running;
+}
+
+.riva-card--ambient::after {
+    opacity: var(--riva-card-halo-ambient-opacity, 0.28);
+}
+
+/* Large ambient glow behind hero-tier elements — same conic, no ring shape. */
+.spectrum-glow {
+    position: absolute;
+    inset: -60px;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--spectrum-conic);
+    filter: blur(70px);
+    opacity: 0.22;
+    animation: spectrum-rotate 16s linear infinite;
+}
+
+/* Standalone rotating ring primitive (MovingBorder) — no halo layer. */
+.moving-border {
+    position: relative;
+}
+
+.moving-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: var(--moving-border-width, 1px);
+    background: var(--spectrum-conic);
+    opacity: var(--moving-border-opacity, 1);
+    animation: spectrum-rotate var(--moving-border-speed, 8s) linear infinite;
+    animation-play-state: var(--moving-border-play, running);
+    transition: opacity 0.4s ease;
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+/* Scan sweep overlay for preview surfaces. */
+.spectrum-scan {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow: hidden;
+    pointer-events: none;
+    border-radius: inherit;
+}
+
+.spectrum-scan::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: -20%;
+    height: 45%;
+    background: linear-gradient(
+        to bottom,
+        transparent,
+        rgba(255, 255, 255, 0.35),
+        rgba(255, 107, 0, 0.12),
+        transparent
+    );
+    opacity: 0;
+}
+
+.group:hover .spectrum-scan::after,
+.spectrum-scan--active::after {
+    animation: spectrum-scan 2.2s ease-in-out 1;
+}
+
+.spectrum-float {
+    animation: spectrum-float 6s ease-in-out infinite;
+}
+
+/* Focus corners — four small brackets that animate inward on viewport entry. */
+.focus-corner {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.focus-corner--visible {
+    animation: spectrum-corner-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.focus-corner-tl {
+    top: -6px;
+    left: -6px;
+    border-top: 2px solid var(--spectrum-orange);
+    border-left: 2px solid var(--spectrum-orange);
+    border-top-left-radius: 6px;
+    --corner-from-x: 6px;
+    --corner-from-y: 6px;
+}
+
+.focus-corner-tr {
+    top: -6px;
+    right: -6px;
+    border-top: 2px solid var(--spectrum-purple);
+    border-right: 2px solid var(--spectrum-purple);
+    border-top-right-radius: 6px;
+    --corner-from-x: -6px;
+    --corner-from-y: 6px;
+}
+
+.focus-corner-bl {
+    bottom: -6px;
+    left: -6px;
+    border-bottom: 2px solid var(--spectrum-blue);
+    border-left: 2px solid var(--spectrum-blue);
+    border-bottom-left-radius: 6px;
+    --corner-from-x: 6px;
+    --corner-from-y: -6px;
+}
+
+.focus-corner-br {
+    bottom: -6px;
+    right: -6px;
+    border-bottom: 2px solid var(--spectrum-magenta);
+    border-right: 2px solid var(--spectrum-magenta);
+    border-bottom-right-radius: 6px;
+    --corner-from-x: -6px;
+    --corner-from-y: -6px;
+}
+
+/* PointerGlow — room-scale ambient cursor glow (desktop only, very faint). */
+.pointer-glow {
+    position: absolute;
+    inset: 0;
+    z-index: -10;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    background: radial-gradient(
+        260px circle at var(--pointer-x, 50%) var(--pointer-y, 20%),
+        rgba(255, 107, 0, 0.08),
+        transparent 70%
+    );
+}
+
+.pointer-glow--active {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .riva-card::before,
+    .spectrum-glow,
+    .moving-border::before {
+        animation: none !important;
+    }
+    .riva-card::before {
+        opacity: 0.35;
+    }
+    .moving-border::before {
+        opacity: 0.4;
+    }
+    .riva-card::after,
+    .pointer-glow {
+        display: none !important;
+    }
+    .spectrum-scan::after {
+        animation: none !important;
+        opacity: 0 !important;
+    }
+    .spectrum-float {
+        animation: none !important;
+    }
+    .focus-corner--visible {
+        animation: none !important;
+        opacity: 1;
+        transform: none !important;
+    }
+}
+
+@media (hover: none) {
+    .riva-card::after,
+    .pointer-glow {
+        display: none !important;
+    }
+}

@@ -1,5 +1,5 @@
 import { ArrowRight } from 'lucide-react';
-import { AuraCard } from '../../effects/AuraCard';
+import { RivaCard } from '../../effects/RivaCard';
 import { Reveal } from '../../effects/Reveal';
 import { Button } from '../../ui/Button';
 import { Container } from '../../ui/Container';
@@ -10,7 +10,7 @@ export function FinalCTA() {
     <section className="relative overflow-hidden bg-dark px-6 py-24 lg:px-8 lg:py-32">
       <Container size="narrow" className="relative text-center">
         <Reveal>
-          <AuraCard intensity="medium" ambient interactive={false} className="mx-auto inline-block rounded-2xl">
+          <RivaCard variant="spectrum" intensity="medium" ambient interactive={false} className="mx-auto inline-block rounded-2xl">
             <div className="rounded-2xl px-8 py-10 sm:px-16 sm:py-14">
               <h2 className="text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
                 Yeni nesil mağazanı
@@ -27,7 +27,7 @@ export function FinalCTA() {
                 </Button>
               </div>
             </div>
-          </AuraCard>
+          </RivaCard>
         </Reveal>
       </Container>
     </section>

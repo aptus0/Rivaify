@@ -1,9 +1,8 @@
 import { Camera, Store, ThumbsUp, Video, type LucideIcon } from 'lucide-react';
-import { AuraCard } from '../../effects/AuraCard';
+import { RivaCard } from '../../effects/RivaCard';
 import { Reveal } from '../../effects/Reveal';
 import { Badge } from '../../ui/Badge';
 import { Container } from '../../ui/Container';
-import { SectionHeading } from '../../ui/SectionHeading';
 import { Logo } from '../../Logo';
 
 interface ChannelNode {
@@ -21,7 +20,7 @@ const TOP_CHANNELS: ChannelNode[] = [
 
 function ChannelCard({ channel }: { channel: ChannelNode }) {
   return (
-    <AuraCard intensity="subtle" className="rounded-2xl">
+    <RivaCard variant="spectrum" intensity="subtle" className="rounded-2xl">
       <div className="flex flex-col items-center gap-2 rounded-2xl border border-dark/[0.07] bg-white px-5 py-4 text-center">
         <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-surface-orange text-primary">
           <channel.icon className="h-5 w-5" strokeWidth={2} />
@@ -32,7 +31,7 @@ function ChannelCard({ channel }: { channel: ChannelNode }) {
           {channel.status === 'live' ? 'Aktif' : 'Planlanıyor'}
         </Badge>
       </div>
-    </AuraCard>
+    </RivaCard>
   );
 }
 
@@ -74,18 +73,11 @@ export function SocialCommerce() {
   return (
     <section id="sosyal-ticaret" className="px-6 py-24 lg:px-8 lg:py-32">
       <Container>
-        <SectionHeading
-          title={
-            <>
-              Müşterilerin neredeyse,
-              <br />
-              <span className="text-primary">mağazan da orada.</span>
-            </>
-          }
-          description="Rivaify satış kanallarını tek bir merkezde birleştirir."
-        />
+        <p className="mx-auto max-w-md text-center text-base text-dark/50">
+          Rivaify satış kanallarını tek bir merkezde birleştirir.
+        </p>
 
-        <Reveal delay={0.15} className="relative mx-auto mt-16 max-w-3xl">
+        <Reveal delay={0.15} className="relative mx-auto mt-10 max-w-3xl">
           <Connectors />
 
           <div className="relative grid grid-cols-3 gap-4">
@@ -99,7 +91,7 @@ export function SocialCommerce() {
           </div>
 
           <div className="relative mx-auto max-w-xs">
-            <AuraCard intensity="medium" className="rounded-2xl">
+            <RivaCard variant="spectrum" intensity="medium" className="rounded-2xl">
               <div className="flex flex-col items-center gap-2 rounded-2xl border border-dark/[0.07] bg-white px-5 py-4 text-center">
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-surface-orange text-primary">
                   <Store className="h-5 w-5" strokeWidth={2} />
@@ -108,7 +100,7 @@ export function SocialCommerce() {
                 <p className="text-xs text-dark/40">Stok · Sipariş · Katalog</p>
                 <Badge variant="default">Aktif</Badge>
               </div>
-            </AuraCard>
+            </RivaCard>
           </div>
         </Reveal>
       </Container>

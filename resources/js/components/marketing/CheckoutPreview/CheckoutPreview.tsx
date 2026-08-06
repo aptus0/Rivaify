@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Lock } from 'lucide-react';
-import { AuraCard } from '../../effects/AuraCard';
+import { RivaCard } from '../../effects/RivaCard';
 import { Reveal } from '../../effects/Reveal';
 import { Container } from '../../ui/Container';
-import { SectionHeading } from '../../ui/SectionHeading';
 
 const ACCENT_OPTIONS = ['#FF6B00', '#111827', '#7C5CFC', '#0EA5A5'];
 const BUTTON_STYLES = ['Yuvarlak', 'Köşeli'] as const;
@@ -15,18 +14,8 @@ export function CheckoutPreview() {
   return (
     <section id="checkout" className="px-6 py-24 lg:px-8 lg:py-32">
       <Container size="wide">
-        <SectionHeading
-          title={
-            <>
-              Satışın en kritik ekranı,
-              <br />
-              <span className="text-primary">markanın bir parçası olsun.</span>
-            </>
-          }
-        />
-
-        <div className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
-          <AuraCard intensity="medium" className="rounded-2xl">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
+          <RivaCard variant="spectrum" intensity="medium" className="rounded-2xl">
             <div className="grid grid-cols-1 gap-6 rounded-2xl border border-dark/[0.07] bg-white p-6 sm:p-8 md:grid-cols-2">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-dark/35">Teslimat Bilgileri</p>
@@ -81,7 +70,7 @@ export function CheckoutPreview() {
                 </p>
               </div>
             </div>
-          </AuraCard>
+          </RivaCard>
 
           <Reveal delay={0.15}>
             <div className="rounded-2xl border border-dark/[0.07] bg-white p-5">

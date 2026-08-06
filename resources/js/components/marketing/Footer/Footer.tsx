@@ -1,45 +1,17 @@
+import { Link } from '@inertiajs/react';
 import { Globe } from 'lucide-react';
 import { Logo } from '../../Logo';
 import { Badge } from '../../ui/Badge';
 import { Container } from '../../ui/Container';
+import { FOOTER_COLUMNS } from '../../../data/navigation';
 
 interface FooterLink {
   label: string;
   href?: string;
 }
 
-interface FooterColumn {
-  title: string;
-  links: FooterLink[];
-}
-
-const COLUMNS: FooterColumn[] = [
-  {
-    title: 'Platform',
-    links: [
-      { label: 'Kontrol Merkezi', href: '#kontrol-merkezi' },
-      { label: 'Online Mağaza', href: '#magaza-olusturucu' },
-      { label: 'Analitik', href: '#analitik' },
-      { label: 'Entegrasyonlar', href: '#entegrasyonlar' },
-    ],
-  },
-  {
-    title: 'Çözümler',
-    links: [
-      { label: 'Moda' },
-      { label: 'Perakende' },
-      { label: 'Dijital Ticaret' },
-      { label: 'Sosyal Ticaret', href: '#sosyal-ticaret' },
-    ],
-  },
-  {
-    title: 'Kaynaklar',
-    links: [{ label: 'Yardım Merkezi' }, { label: 'Geliştiriciler' }, { label: 'Dokümantasyon' }],
-  },
-  {
-    title: 'Şirket',
-    links: [{ label: 'Hakkımızda' }, { label: 'İletişim' }],
-  },
+const EXTRA_COLUMNS: { title: string; links: FooterLink[] }[] = [
+  { title: 'Şirket', links: [{ label: 'Hakkımızda' }, { label: 'İletişim' }] },
 ];
 
 const LEGAL_LINKS = ['Gizlilik Politikası', 'Kullanım Koşulları', 'KVKK'];
@@ -47,9 +19,9 @@ const LEGAL_LINKS = ['Gizlilik Politikası', 'Kullanım Koşulları', 'KVKK'];
 function FooterLinkItem({ link }: { link: FooterLink }) {
   if (link.href) {
     return (
-      <a href={link.href} className="text-sm font-medium text-dark/60 transition-colors hover:text-dark">
+      <Link href={link.href} className="text-sm font-medium text-dark/60 transition-colors hover:text-dark">
         {link.label}
-      </a>
+      </Link>
     );
   }
   return (
@@ -61,8 +33,10 @@ function FooterLinkItem({ link }: { link: FooterLink }) {
 }
 
 export function Footer() {
+  const columns = [...FOOTER_COLUMNS, ...EXTRA_COLUMNS];
+
   return (
-    <footer className="border-t border-dark/[0.06] px-6 pt-16 pb-10 lg:px-8">
+    <footer className="border-t border-dark/[0.06] bg-white px-6 pt-16 pb-10 lg:px-8">
       <Container>
         <div className="grid grid-cols-2 gap-10 sm:grid-cols-4 lg:grid-cols-5">
           <div className="col-span-2 sm:col-span-4 lg:col-span-1">
@@ -72,7 +46,7 @@ export function Footer() {
             </p>
           </div>
 
-          {COLUMNS.map((column) => (
+          {columns.map((column) => (
             <div key={column.title}>
               <p className="text-xs font-semibold uppercase tracking-wide text-dark/35">{column.title}</p>
               <ul className="mt-4 flex flex-col gap-3">

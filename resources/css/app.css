@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-@import './aura.css';
+@import './focus-spectrum.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -8,18 +8,19 @@
     --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 
-    /* Marketing brand palette (Chromatic Aura brief) — --color-surface is the
-       *alternative* background for alternating section stripes; body itself
-       sits on plain white. --color-dark doubles as both the deep-dark section
-       background and the near-black heading/body text color on light
-       sections (same token, opacity does the rest via e.g. text-dark/60). */
+    /* Marketing brand palette (Rivaify Spectrum brief, 2026-08-06) —
+       --color-surface is the *alternative* background for alternating
+       section stripes; body itself sits on plain white. --color-dark
+       doubles as both the deep-dark section background and the near-black
+       heading/body text color on light sections (opacity does the rest,
+       e.g. text-dark/60). */
     --color-primary: #ff6b00;
-    --color-primary-hover: #ea5f00;
-    --color-primary-soft: #ff8a1f;
-    --color-dark: #0d1117;
-    --color-soft-dark: #17191c;
-    --color-surface: #fafafa;
-    --color-surface-orange: #fff3e8;
+    --color-primary-hover: #e85f00;
+    --color-primary-soft: #ff8a3d;
+    --color-dark: #090b0f;
+    --color-soft-dark: #111318;
+    --color-surface: #f8f8f8;
+    --color-surface-orange: #fff4ea;
 
     /* Dashboard-only tokens (brief §22) — app-bg/card separate the page
        background from card surfaces, which the marketing site's single
@@ -28,6 +29,20 @@
     --color-card: #ffffff;
     --color-border: #e5e7eb;
     --color-muted: #6b7280;
+
+    /* Radius tiers (brief: "avoid enormous 50px rounded cards everywhere") —
+       Tailwind v4 maps --radius-{name} under @theme to a rounded-{name}
+       utility automatically. */
+    --radius-control: 10px;
+    --radius-card: 16px;
+    --radius-showcase: 24px;
+    --radius-window: 30px;
+
+    /* Shadow tiers — same auto-mapping, shadow-{name}. xs/sm come from
+       Tailwind's own default scale already. */
+    --shadow-product: 0 20px 48px -20px rgba(9, 11, 15, 0.18);
+    --shadow-floating: 0 12px 28px -10px rgba(9, 11, 15, 0.2);
+    --shadow-spectrum: 0 24px 64px -24px rgba(121, 87, 255, 0.25);
 }
 
 html {
@@ -38,4 +53,25 @@ body {
     background-color: #ffffff;
     color: var(--color-dark);
     -webkit-font-smoothing: antialiased;
+}
+
+/* BrandMarquee — logo strip loop (resources/js/components/brands/BrandMarquee.tsx). */
+@keyframes marquee-scroll {
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+.animate-marquee {
+    animation: marquee-scroll 28s linear infinite;
+}
+
+.animate-marquee:hover {
+    animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-marquee {
+        animation: none;
+    }
 }
