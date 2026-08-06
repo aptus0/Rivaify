@@ -2,6 +2,7 @@
 
 use App\Core\Security\Http\Middleware\EnsureIsRivaifyAdmin;
 use App\Core\Tenancy\Http\Middleware\EnsureStoreContext;
+use App\Core\Tenancy\Http\Middleware\EnsureStorefrontStoreContext;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,8 +20,21 @@ return Application::configure(basePath: dirname(__DIR__))
         // rivaify.com talking to api.rivaify.com — see SANCTUM_STATEFUL_DOMAINS.
         $middleware->statefulApi();
 
+        // The only way this app is reached in any real environment is via
+        // Cloudflare Tunnel (cloudflared), which terminates TLS at
+        // Cloudflare's edge and forwards to this origin as plain HTTP over
+        // loopback — nginx only ever binds 127.0.0.1. Without this, Laravel
+        // has no way to know the original request was HTTPS: it builds
+        // absolute URLs (redirects, url()/asset()) with an http:// scheme,
+        // which browsers then block as mixed content on an https:// page.
+        // Trusting '*' is safe here specifically because cloudflared is the
+        // only thing that can ever connect to nginx — it isn't bound to a
+        // public interface.
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'store.context' => EnsureStoreContext::class,
+            'storefront.context' => EnsureStorefrontStoreContext::class,
             'rivaify.admin' => EnsureIsRivaifyAdmin::class,
         ]);
     })
