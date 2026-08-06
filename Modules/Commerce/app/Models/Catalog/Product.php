@@ -7,13 +7,14 @@ use App\Core\Tenancy\Concerns\BelongsToStore;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Commerce\Enums\Catalog\ProductStatus;
 use Modules\Commerce\Enums\Catalog\ProductType;
 
 #[Fillable([
-    'title', 'slug', 'description', 'product_type', 'status', 'vendor',
+    'title', 'slug', 'description', 'category_id', 'brand_id', 'product_type', 'status', 'vendor',
     'is_taxable', 'requires_shipping', 'published_at', 'created_by', 'updated_by',
 ])]
 class Product extends Model
@@ -36,6 +37,16 @@ class Product extends Model
             'requires_shipping' => 'boolean',
             'published_at' => 'datetime',
         ];
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class);
     }
 
     public function options(): HasMany

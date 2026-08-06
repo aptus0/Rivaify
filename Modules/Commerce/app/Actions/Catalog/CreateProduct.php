@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\Commerce\DTOs\Catalog\CreateProductData;
 use Modules\Commerce\Events\Catalog\ProductCreated;
+use Modules\Commerce\Exceptions\Catalog\CrossStoreAssignmentException;
+use Modules\Commerce\Models\Catalog\Brand;
+use Modules\Commerce\Models\Catalog\Category;
 use Modules\Commerce\Models\Catalog\Product;
 
 /**
@@ -18,10 +21,26 @@ class CreateProduct
     public function handle(CreateProductData $data): Product
     {
         return DB::transaction(function () use ($data) {
+            // See AssignProductCategory's docblock — same reasoning applies to
+            // brand_id: Category/Brand::find() is store-scoped, so a foreign
+            // store's id simply won't resolve.
+            if ($data->categoryId !== null && Category::query()->find($data->categoryId) === null) {
+                throw new CrossStoreAssignmentException(
+                    "Category #{$data->categoryId} does not exist in the current store."
+                );
+            }
+            if ($data->brandId !== null && Brand::query()->find($data->brandId) === null) {
+                throw new CrossStoreAssignmentException(
+                    "Brand #{$data->brandId} does not exist in the current store."
+                );
+            }
+
             $product = Product::query()->create([
                 'title' => $data->title,
                 'slug' => $this->uniqueSlug($data->title),
                 'description' => $data->description,
+                'category_id' => $data->categoryId,
+                'brand_id' => $data->brandId,
                 'product_type' => $data->productType,
                 'vendor' => $data->vendor,
                 'is_taxable' => $data->isTaxable,
