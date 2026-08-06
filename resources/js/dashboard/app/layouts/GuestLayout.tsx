@@ -7,8 +7,8 @@ import { Logo } from '../../../components/Logo';
 export function GuestLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-app-bg">
-      <div className="hidden w-1/2 flex-col justify-between bg-dark p-12 text-white lg:flex">
-        <Logo />
+      <div className="hidden w-1/2 flex-col items-start justify-between bg-dark p-12 text-white lg:flex">
+        <Logo onDark />
         <div>
           <p className="text-3xl font-semibold">
             Commerce
