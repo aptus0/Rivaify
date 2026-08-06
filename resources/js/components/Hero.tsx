@@ -14,7 +14,11 @@ export function Hero() {
   return (
     <section id="top" className="relative overflow-hidden pt-40 pb-24 lg:pt-48 lg:pb-32">
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[560px] bg-[radial-gradient(60%_50%_at_50%_0%,rgba(255,107,0,0.08),rgba(255,107,0,0)_70%)]"
+        className="pointer-events-none absolute inset-0 -z-20 bg-[linear-gradient(rgba(17,17,17,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(17,17,17,0.05)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black,transparent_75%)]"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[560px] bg-[radial-gradient(60%_50%_at_50%_0%,rgba(255,107,0,0.1),rgba(255,107,0,0)_70%)]"
         aria-hidden="true"
       />
 

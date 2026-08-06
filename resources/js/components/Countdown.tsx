@@ -51,9 +51,9 @@ export function Countdown() {
   return (
     <section className="border-y border-dark/[0.06] bg-surface-orange/40 py-16">
       <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
-        <p className="text-sm font-semibold uppercase tracking-wide text-dark/40">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-dark/40">
           Rivaify&apos;ın lansmanına kalan süre
-        </p>
+        </h2>
 
         <div className="mt-8 flex items-center justify-center gap-3 sm:gap-5">
           {units.map((unit, index) => (
