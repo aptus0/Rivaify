@@ -39,8 +39,8 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="mx-auto mt-16 w-full max-w-sm">
-      <h1 className="mb-6 text-2xl font-semibold">Kayıt Ol</h1>
+    <div>
+      <h1 className="mb-6 text-2xl font-semibold text-dark">Kayıt Ol</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Input label="Ad Soyad" name="name" autoComplete="name" required error={fieldErrors.name} />
         <Input label="E-posta" name="email" type="email" autoComplete="email" required error={fieldErrors.email} />
@@ -64,9 +64,9 @@ export function RegisterPage() {
           {submitting ? 'Gönderiliyor…' : 'Kayıt Ol'}
         </Button>
       </form>
-      <p className="mt-4 text-sm text-neutral-600">
+      <p className="mt-4 text-sm text-muted">
         Zaten hesabın var mı?{' '}
-        <Link to="/login" className="font-medium underline">
+        <Link to="/login" className="font-medium text-primary hover:text-primary-hover">
           Giriş yap
         </Link>
       </p>

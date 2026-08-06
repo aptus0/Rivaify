@@ -19,9 +19,9 @@ export function VerifyEmailPage() {
   }
 
   return (
-    <div className="mx-auto mt-16 w-full max-w-sm text-center">
-      <h1 className="mb-2 text-2xl font-semibold">E-postanı Doğrula</h1>
-      <p className="mb-6 text-sm text-neutral-600">
+    <div className="text-center">
+      <h1 className="mb-2 text-2xl font-semibold text-dark">E-postanı Doğrula</h1>
+      <p className="mb-6 text-sm text-muted">
         {user?.email} adresine bir doğrulama bağlantısı gönderdik. Bağlantıya tıkladıktan sonra aşağıdaki
         butona bas.
       </p>
@@ -31,7 +31,7 @@ export function VerifyEmailPage() {
           type="button"
           onClick={() => void handleResend()}
           disabled={sending}
-          className="text-sm text-neutral-600 underline disabled:opacity-50"
+          className="text-sm text-primary hover:text-primary-hover disabled:opacity-50"
         >
           {sent ? 'Tekrar gönderildi' : 'E-postayı tekrar gönder'}
         </button>
