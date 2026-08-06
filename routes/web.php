@@ -19,11 +19,42 @@ use Illuminate\Support\Facades\Route;
 // else matched. Bug found live 2026-08-06 via a crashing AuthProvider
 // (GET /api/me came back as this dashboard HTML instead of JSON,
 // "Cannot read properties of undefined (reading 'data')").
+//
+// The explicit get('/', ...) below the fallback is a second, later bug fix:
+// Laravel checks *every* non-fallback route before *any* fallback route,
+// regardless of domain specificity or registration order — so the
+// domain-less marketing get('/', ...) further down this file was winning
+// the exact path "/" for app.rivaify.com too (fallback() only ever runs
+// when nothing else matched at all). An explicit domain-scoped get('/', ...)
+// is a normal route like the marketing one, so registration order decides
+// the tie-break, and this one comes first. Found live 2026-08-06: bare
+// https://app.rivaify.com/ served the marketing page while /login worked
+// fine (nothing else matches that exact path, so it reached the fallback).
 Route::domain('app.rivaify.com')->group(function () {
+    Route::get('/', function () {
+        return view('dashboard');
+    });
     Route::fallback(function () {
         return view('dashboard');
     });
 });
+
+// The customer-facing SPA is isolated from the merchant dashboard and is
+// resolved by host rather than an exposed store id. The middleware binds the
+// host's Store into CurrentStore before any storefront API request or view is
+// served. The `.test` route keeps the same behavior available in local tests.
+// Same explicit get('/', ...) + fallback() pairing as app.rivaify.com above,
+// for the same reason — otherwise the marketing route below wins the exact
+// path "/" on any {store}.rivaify.com host too.
+Route::domain('{store}.rivaify.com')->middleware('storefront.context')->group(function () {
+    Route::get('/', function () {
+        return view('storefront');
+    });
+    Route::fallback(function () {
+        return view('storefront');
+    });
+});
+
 
 // rivaify.com (and any other/unrecognized host, e.g. plain IP in local dev)
 // — the public marketing site.
