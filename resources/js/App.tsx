@@ -15,8 +15,8 @@ export function App() {
       <Navbar />
       <main>
         <Hero />
-        <Countdown />
         <DashboardPreview />
+        <Countdown />
         <Features />
         <Integrations />
         <Themes />
