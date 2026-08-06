@@ -27,7 +27,7 @@ export function OnboardingPage() {
   }
 
   if (store?.onboarding_status === 'completed') {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const status = store?.onboarding_status ?? 'account_created';

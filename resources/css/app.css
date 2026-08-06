@@ -8,11 +8,20 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 
     --color-primary: #ff6b00;
+    --color-primary-hover: #ea5f00;
     --color-primary-soft: #ff8a1f;
     --color-dark: #111111;
     --color-soft-dark: #1a1a1a;
     --color-surface: #fafaf9;
     --color-surface-orange: #fff5ec;
+
+    /* Dashboard-only tokens (brief §22) — app-bg/card separate the page
+       background from card surfaces, which the marketing site's single
+       --color-surface doesn't need to distinguish. */
+    --color-app-bg: #f7f7f8;
+    --color-card: #ffffff;
+    --color-border: #e5e7eb;
+    --color-muted: #6b7280;
 }
 
 html {
