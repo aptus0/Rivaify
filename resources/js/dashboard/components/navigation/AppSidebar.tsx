@@ -19,20 +19,22 @@ interface NavItem {
   label: string;
   icon: LucideIcon;
   href?: string;
-  children?: string[];
+  children?: Array<{ label: string; href?: string }>;
 }
 
-// Only "Ana Sayfa" has a real route today (brief §7) — everything else is
-// Sprint 02+ Commerce work and shown disabled so the sidebar's final shape
-// is visible without faking functionality that doesn't exist yet.
 const NAV_ITEMS: NavItem[] = [
   { label: 'Ana Sayfa', icon: Home, href: '/dashboard' },
   { label: 'Siparişler', icon: ShoppingCart },
-  { label: 'Ürünler', icon: Package, children: ['Ürünler', 'Kategoriler', 'Koleksiyonlar', 'Envanter'] },
+  { label: 'Ürünler', icon: Package, href: '/products', children: [
+    { label: 'Ürünler', href: '/products' },
+    { label: 'Kategoriler' },
+    { label: 'Koleksiyonlar' },
+    { label: 'Envanter' },
+  ] },
   { label: 'Müşteriler', icon: Users },
   { label: 'Pazarlama', icon: Megaphone },
   { label: 'İndirimler', icon: Percent },
-  { label: 'Satış Kanalları', icon: Share2, children: ['Online Mağaza', 'Instagram', 'Facebook', 'TikTok'] },
+  { label: 'Satış Kanalları', icon: Share2, children: [{ label: 'Online Mağaza' }, { label: 'Instagram' }, { label: 'Facebook' }, { label: 'TikTok' }] },
   { label: 'Analitik', icon: BarChart3 },
   { label: 'Uygulamalar', icon: Plug },
 ];
@@ -46,7 +48,32 @@ function SidebarContent() {
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3">
         {NAV_ITEMS.map((item) =>
-          item.href ? (
+          item.children ? (
+            <div key={item.label}>
+              {item.href ? (
+                <NavLink
+                  to={item.href}
+                  className={({ isActive }) =>
+                    `flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition ${
+                      isActive ? 'bg-surface-orange text-primary-hover' : 'text-dark hover:bg-app-bg'
+                    }`
+                  }
+                >
+                  <span className="flex items-center gap-3"><item.icon size={18} />{item.label}</span>
+                </NavLink>
+              ) : (
+                <div className="flex cursor-not-allowed items-center justify-between rounded-md px-3 py-2 text-sm font-medium text-muted">
+                  <span className="flex items-center gap-3"><item.icon size={18} />{item.label}</span>
+                  <span className="rounded-full bg-app-bg px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">Yakında</span>
+                </div>
+              )}
+              <div className="ml-9 space-y-0.5 border-l border-border pl-3">
+                {item.children.map((child) => child.href ? (
+                  <NavLink key={child.label} to={child.href} className={({ isActive }) => `block py-1 text-sm ${isActive ? 'font-medium text-primary-hover' : 'text-muted hover:text-dark'}`}>{child.label}</NavLink>
+                ) : <p key={child.label} className="cursor-not-allowed py-1 text-sm text-muted/70">{child.label}</p>)}
+              </div>
+            </div>
+          ) : item.href ? (
             <NavLink
               key={item.label}
               to={item.href}
@@ -70,15 +97,6 @@ function SidebarContent() {
                   Yakında
                 </span>
               </div>
-              {item.children && (
-                <div className="ml-9 space-y-0.5 border-l border-border pl-3">
-                  {item.children.map((child) => (
-                    <p key={child} className="cursor-not-allowed py-1 text-sm text-muted/70">
-                      {child}
-                    </p>
-                  ))}
-                </div>
-              )}
             </div>
           ),
         )}
