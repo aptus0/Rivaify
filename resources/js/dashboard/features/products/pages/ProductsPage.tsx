@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Archive, CheckSquare, ChevronDown, Copy, Download, Filter, Plus, Upload, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { usePageTitle } from '../../../app/layouts/AppLayout';
@@ -48,7 +48,7 @@ function inventoryTone(status: InventoryStatus): 'success' | 'warning' | 'neutra
 export function ProductsPage() {
   usePageTitle('Ürünler');
   const [searchInput, setSearchInput] = useState('');
-  const deferredSearch = useDeferredValue(searchInput);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filters, setFilters] = useState<ProductFilters>(EMPTY_FILTERS);
   const [catalog, setCatalog] = useState<CatalogOrganization | null>(null);
   const [products, setProducts] = useState<ProductSummary[]>([]);
@@ -62,6 +62,12 @@ export function ProductsPage() {
   const [bulkBusy, setBulkBusy] = useState(false);
 
   useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedSearch(searchInput), 300);
+
+    return () => window.clearTimeout(timeout);
+  }, [searchInput]);
+
+  useEffect(() => {
     void getCatalogOrganization().then((response) => setCatalog(response.data)).catch(() => setCatalog(null));
   }, []);
 
@@ -70,7 +76,7 @@ export function ProductsPage() {
     setLoading(true);
     setError(null);
     void listProducts({
-      q: deferredSearch.trim() || undefined,
+      q: debouncedSearch.trim() || undefined,
       status: filters.status || undefined,
       category_id: filters.categoryId || undefined,
       brand_id: filters.brandId || undefined,
@@ -96,7 +102,7 @@ export function ProductsPage() {
     return () => {
       active = false;
     };
-  }, [deferredSearch, filters, page]);
+  }, [debouncedSearch, filters, page]);
 
   function setFilter<K extends keyof ProductFilters>(key: K, value: ProductFilters[K]) {
     setPage(1);
@@ -121,7 +127,7 @@ export function ProductsPage() {
       await bulkUpdateProducts({ product_ids: Array.from(selected), action });
       setPage(1);
       setSelected(new Set());
-      const response = await listProducts({ q: deferredSearch.trim() || undefined });
+      const response = await listProducts({ q: debouncedSearch.trim() || undefined });
       setProducts(response.data);
       setCounts(response.summary);
       setLastPage(response.meta.last_page);
