@@ -46,12 +46,13 @@ export class ApiError extends Error {
 }
 
 type RequestOptions = {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
 };
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const method = options.method ?? 'GET';
+  const isFormData = options.body instanceof FormData;
 
   if (method !== 'GET') {
     await ensureCsrfCookie();
@@ -62,10 +63,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     credentials: 'include',
     headers: {
       Accept: 'application/json',
-      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
       ...(method !== 'GET' ? { 'X-XSRF-TOKEN': readCookie('XSRF-TOKEN') ?? '' } : {}),
     },
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    body: options.body ? (isFormData ? options.body as FormData : JSON.stringify(options.body)) : undefined,
   });
 
   const contentType = response.headers.get('content-type') ?? '';

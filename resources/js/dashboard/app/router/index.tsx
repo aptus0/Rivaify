@@ -9,10 +9,6 @@ import { RegisterPage } from '../../features/auth/pages/RegisterPage';
 import { VerifyEmailPage } from '../../features/auth/pages/VerifyEmailPage';
 import { OnboardingPage } from '../../features/onboarding/pages/OnboardingPage';
 import { DashboardPage } from '../../features/dashboard/pages/DashboardPage';
-import { OrdersPage } from '../../features/orders/pages/OrdersPage';
-import { OrderDetailPage } from '../../features/orders/pages/OrderDetailPage';
-import { CustomersPage } from '../../features/customers/pages/CustomersPage';
-import { CustomerDetailPage } from '../../features/customers/pages/CustomerDetailPage';
 
 // Served on its own host (app.rivaify.com, brief §11) via Route::domain()
 // in routes/web.php — no path prefix, so basename is just '/'. Requires a
@@ -67,10 +63,6 @@ export const router = createBrowserRouter(
       ),
       children: [
         { index: true, element: <DashboardPage /> },
-        { path: 'orders', element: <OrdersPage /> },
-        { path: 'orders/:orderId', element: <OrderDetailPage /> },
-        { path: 'customers', element: <CustomersPage /> },
-        { path: 'customers/:customerId', element: <CustomerDetailPage /> },
       ],
     },
   ],
