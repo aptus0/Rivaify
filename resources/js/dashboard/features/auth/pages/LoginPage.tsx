@@ -33,8 +33,8 @@ export function LoginPage() {
   }
 
   return (
-    <div className="mx-auto mt-16 w-full max-w-sm">
-      <h1 className="mb-6 text-2xl font-semibold">Giriş Yap</h1>
+    <div>
+      <h1 className="mb-6 text-2xl font-semibold text-dark">Giriş Yap</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Input label="E-posta" name="email" type="email" autoComplete="email" required />
         <Input label="Şifre" name="password" type="password" autoComplete="current-password" required />
@@ -43,9 +43,9 @@ export function LoginPage() {
           {submitting ? 'Giriş yapılıyor…' : 'Giriş Yap'}
         </Button>
       </form>
-      <p className="mt-4 text-sm text-neutral-600">
+      <p className="mt-4 text-sm text-muted">
         Hesabın yok mu?{' '}
-        <Link to="/register" className="font-medium underline">
+        <Link to="/register" className="font-medium text-primary hover:text-primary-hover">
           Kayıt ol
         </Link>
       </p>

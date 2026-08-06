@@ -1,32 +1,20 @@
 import type { ReactNode } from 'react';
 import { Logo } from '../../../components/Logo';
+import { ParticleBackground } from '../../components/effects/ParticleBackground';
 
-/** Login/Register/VerifyEmail shell (brief §17): brand panel + form on
- * desktop, form only on mobile — the brand panel is simply hidden below
- * `lg`, not rearranged, so it never competes with the form for space. */
+/** Login/Register/VerifyEmail shell (brief §17, updated per later feedback
+ * to a single centered card over an interactive dot-field background
+ * instead of the earlier dark split-panel layout). */
 export function GuestLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-app-bg">
-      <div className="hidden w-1/2 flex-col items-start justify-between bg-dark p-12 text-white lg:flex">
-        <Logo onDark />
-        <div>
-          <p className="text-3xl font-semibold">
-            Commerce
-            <br />
-            reimagined.
-          </p>
-          <p className="mt-4 max-w-sm text-sm text-white/60">
-            Mağazanı kur, sosyal kanallarını bağla, satışını tek yerden yönet.
-          </p>
-        </div>
-        <p className="text-xs text-white/40">&copy; {new Date().getFullYear()} Rivaify</p>
-      </div>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white px-4 py-12">
+      <ParticleBackground />
 
-      <div className="flex flex-1 flex-col items-center justify-center px-4 py-12">
-        <div className="w-full max-w-sm">
-          <div className="mb-8 lg:hidden">
-            <Logo />
-          </div>
+      <div className="relative w-full max-w-sm">
+        <div className="mb-8 flex justify-center">
+          <Logo />
+        </div>
+        <div className="rounded-2xl border border-border bg-white/90 p-8 shadow-xl shadow-dark/5 backdrop-blur-sm">
           {children}
         </div>
       </div>

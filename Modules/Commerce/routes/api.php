@@ -1,8 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Modules\Commerce\Http\Controllers\CommerceController;
-
-Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {
-    Route::apiResource('commerces', CommerceController::class)->names('commerce');
-});
+// No HTTP routes yet — Commerce is domain/Action layer only so far
+// (Catalog: products, variants, options, categories, brands). Controllers
+// land with the product create/edit UI (Sprint 02 build order step 3).
