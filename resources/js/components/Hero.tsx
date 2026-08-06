@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
+import { ParticleBackground } from './effects/ParticleBackground';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -13,16 +14,14 @@ const fadeUp = {
 export function Hero() {
   return (
     <section id="top" className="relative overflow-hidden pt-40 pb-24 lg:pt-48 lg:pb-32">
+      <ParticleBackground className="opacity-60" />
+
       <div
-        className="pointer-events-none absolute inset-0 -z-20 bg-[linear-gradient(rgba(17,17,17,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(17,17,17,0.05)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black,transparent_75%)]"
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[560px] bg-[radial-gradient(60%_50%_at_50%_0%,rgba(255,107,0,0.1),rgba(255,107,0,0)_70%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[560px] bg-[radial-gradient(60%_50%_at_50%_0%,rgba(255,107,0,0.12),rgba(255,107,0,0)_70%)]"
         aria-hidden="true"
       />
 
-      <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
+      <div className="relative mx-auto max-w-4xl px-6 text-center lg:px-8">
         <motion.div
           initial="hidden"
           animate="visible"
@@ -39,9 +38,10 @@ export function Hero() {
           animate="visible"
           custom={1}
           variants={fadeUp}
-          className="mt-8 text-4xl font-extrabold leading-[1.1] tracking-tight text-dark sm:text-5xl lg:text-6xl"
+          className="mt-8 text-5xl font-extrabold leading-[1.05] tracking-tight text-dark sm:text-6xl lg:text-7xl"
         >
-          E-ticaretin <span className="text-primary">yeni nesli</span> yakında burada.
+          E-ticaretin <span className="text-primary">yeni nesli</span>
+          <br className="hidden sm:block" /> yakında burada.
         </motion.h1>
 
         <motion.p
@@ -49,7 +49,7 @@ export function Hero() {
           animate="visible"
           custom={2}
           variants={fadeUp}
-          className="mt-5 text-lg font-medium text-dark/60 sm:text-xl"
+          className="mt-6 text-lg font-medium text-dark/60 sm:text-xl"
         >
           Mağazanı kur. Sosyal kanallarını bağla. <span className="text-dark">Satışını tek yerden yönet.</span>
         </motion.p>

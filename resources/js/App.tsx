@@ -2,6 +2,7 @@ import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { Countdown } from './components/Countdown';
 import { DashboardPreview } from './components/DashboardPreview';
+import { HowItWorks } from './components/HowItWorks';
 import { Features } from './components/Features';
 import { Integrations } from './components/Integrations';
 import { Themes } from './components/Themes';
@@ -16,11 +17,12 @@ export function App() {
       <main>
         <Hero />
         <DashboardPreview />
-        <Countdown />
+        <HowItWorks />
         <Features />
         <Integrations />
         <Themes />
         <WhyRivaify />
+        <Countdown />
         <EarlyAccess />
       </main>
       <Footer />

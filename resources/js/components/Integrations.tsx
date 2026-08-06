@@ -15,8 +15,12 @@ const CHANNELS: Channel[] = [
 
 export function Integrations() {
   return (
-    <section id="entegrasyonlar" className="bg-soft-dark px-6 py-24 text-white lg:px-8 lg:py-32">
-      <div className="mx-auto max-w-6xl">
+    <section id="entegrasyonlar" className="relative overflow-hidden bg-soft-dark px-6 py-24 text-white lg:px-8 lg:py-32">
+      <div
+        className="pointer-events-none absolute inset-0 -z-0 bg-[radial-gradient(50%_60%_at_80%_20%,rgba(255,107,0,0.12),transparent_70%)]"
+        aria-hidden="true"
+      />
+      <div className="relative mx-auto max-w-6xl">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-center">
           <motion.div
             initial={{ opacity: 0, y: 24 }}

@@ -67,7 +67,7 @@ export function Themes() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
-              className="overflow-hidden rounded-2xl border border-dark/[0.07] bg-white transition-shadow hover:shadow-[0_16px_40px_-16px_rgba(17,17,17,0.15)]"
+              className="overflow-hidden rounded-2xl border border-dark/[0.07] bg-white transition-all hover:-translate-y-1 hover:shadow-[0_20px_48px_-16px_rgba(17,17,17,0.18)]"
             >
               <StoreMock theme={theme} />
               <div className="flex items-center justify-between border-t border-dark/[0.06] px-4 py-3.5">
