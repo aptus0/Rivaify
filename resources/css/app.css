@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './aura.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -7,13 +8,18 @@
     --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 
+    /* Marketing brand palette (Chromatic Aura brief) — --color-surface is the
+       *alternative* background for alternating section stripes; body itself
+       sits on plain white. --color-dark doubles as both the deep-dark section
+       background and the near-black heading/body text color on light
+       sections (same token, opacity does the rest via e.g. text-dark/60). */
     --color-primary: #ff6b00;
     --color-primary-hover: #ea5f00;
     --color-primary-soft: #ff8a1f;
-    --color-dark: #111111;
-    --color-soft-dark: #1a1a1a;
-    --color-surface: #fafaf9;
-    --color-surface-orange: #fff5ec;
+    --color-dark: #0d1117;
+    --color-soft-dark: #17191c;
+    --color-surface: #fafafa;
+    --color-surface-orange: #fff3e8;
 
     /* Dashboard-only tokens (brief §22) — app-bg/card separate the page
        background from card surfaces, which the marketing site's single
@@ -29,7 +35,7 @@ html {
 }
 
 body {
-    background-color: var(--color-surface);
+    background-color: #ffffff;
     color: var(--color-dark);
     -webkit-font-smoothing: antialiased;
 }

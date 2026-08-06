@@ -1,0 +1,246 @@
+/*
+ * Rivaify Chromatic Commerce Aura — shared CSS infrastructure for
+ * AuraCard / ChromaticBorder / CursorAura / ScanHighlight (resources/js/components/effects).
+ *
+ * Two independent layers, both pure CSS (no per-frame JS):
+ *  1. `.aura-card::before` — a crisp 1px gradient ring (conic gradient carved
+ *     into a ring via the standard padding + exclude-mask technique), which
+ *     fades in and slowly rotates on hover/active/ambient. Its shape doesn't
+ *     depend on pointer position — trying to *also* gate that ring's mask by
+ *     proximity breaks the exclude-mask math (verified: overriding mask-image
+ *     alone while keeping mask-composite: exclude reveals the whole interior
+ *     far from the pointer instead of hiding it), so pointer-reactivity lives
+ *     entirely in layer 2 instead.
+ *  2. `.aura-card::after` — a heavily blurred halo positioned at
+ *     var(--mouse-x)/var(--mouse-y), which JS updates only while the pointer
+ *     is inside the element (usePointerPosition.ts) — this is what actually
+ *     "follows" the cursor.
+ */
+
+@property --aura-angle {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
+}
+
+:root {
+    --aura-orange: #ff6b00;
+    --aura-magenta: #ff3d81;
+    --aura-purple: #7c5cfc;
+    --aura-blue: #3984ff;
+    --aura-cyan: #2dd4bf;
+    --aura-conic: conic-gradient(
+        from var(--aura-angle),
+        var(--aura-orange),
+        var(--aura-magenta),
+        var(--aura-purple),
+        var(--aura-blue),
+        var(--aura-cyan),
+        var(--aura-orange)
+    );
+}
+
+@keyframes aura-rotate {
+    to {
+        --aura-angle: 360deg;
+    }
+}
+
+@keyframes aura-scan {
+    0% {
+        transform: translateY(-110%);
+        opacity: 0;
+    }
+    15% {
+        opacity: 1;
+    }
+    85% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(110%);
+        opacity: 0;
+    }
+}
+
+@keyframes aura-float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+.aura-card {
+    position: relative;
+    isolation: isolate;
+}
+
+/* Layer 1: crisp rotating ring, carved from a filled box via exclude-mask. */
+.aura-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--aura-conic);
+    animation: aura-rotate 8s linear infinite paused;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+/* Layer 2: soft blurred halo that tracks the pointer, sitting outside the card. */
+.aura-card::after {
+    content: '';
+    position: absolute;
+    inset: -40px;
+    z-index: -1;
+    border-radius: inherit;
+    background: radial-gradient(
+        280px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        color-mix(in srgb, var(--aura-orange) 70%, transparent),
+        color-mix(in srgb, var(--aura-purple) 55%, transparent) 45%,
+        transparent 72%
+    );
+    filter: blur(48px);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+}
+
+.aura-card:hover::before,
+.aura-card--active::before {
+    opacity: var(--aura-card-opacity, 1);
+    animation-play-state: running;
+}
+
+.aura-card:hover::after,
+.aura-card--active::after {
+    opacity: var(--aura-card-halo-opacity, 0.5);
+}
+
+.aura-card--ambient::before {
+    opacity: var(--aura-card-ambient-opacity, 0.55);
+    animation-play-state: running;
+}
+
+.aura-card--ambient::after {
+    opacity: var(--aura-card-halo-ambient-opacity, 0.28);
+}
+
+/* Large ambient glow behind hero-tier elements — same conic, no ring shape. */
+.aura-glow {
+    position: absolute;
+    inset: -60px;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--aura-conic);
+    filter: blur(70px);
+    opacity: 0.22;
+    animation: aura-rotate 16s linear infinite;
+}
+
+/* Scan sweep overlay for preview surfaces. */
+.aura-scan {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow: hidden;
+    pointer-events: none;
+    border-radius: inherit;
+}
+
+.aura-scan::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: -20%;
+    height: 45%;
+    background: linear-gradient(
+        to bottom,
+        transparent,
+        rgba(255, 255, 255, 0.35),
+        rgba(255, 107, 0, 0.12),
+        transparent
+    );
+    opacity: 0;
+}
+
+.group:hover .aura-scan::after,
+.aura-scan--active::after {
+    animation: aura-scan 1.8s ease-in-out 1;
+}
+
+.aura-float {
+    animation: aura-float 6s ease-in-out infinite;
+}
+
+/* Standalone ring primitive (ChromaticBorder) — no halo layer, opacity/motion
+   driven by inline CSS vars so callers can toggle it programmatically. */
+.chromatic-border {
+    position: relative;
+}
+
+.chromatic-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: var(--chromatic-border-width, 1px);
+    background: var(--aura-conic);
+    opacity: var(--chromatic-border-opacity, 1);
+    animation: aura-rotate var(--chromatic-border-speed, 8s) linear infinite;
+    animation-play-state: var(--chromatic-border-play, running);
+    transition: opacity 0.4s ease;
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .aura-card::before,
+    .aura-glow,
+    .chromatic-border::before {
+        animation: none !important;
+    }
+    .chromatic-border::before {
+        opacity: 0.4;
+    }
+    .aura-card::before {
+        opacity: 0.35;
+    }
+    .aura-card::after {
+        display: none;
+    }
+    .aura-scan::after {
+        animation: none !important;
+        opacity: 0 !important;
+    }
+    .aura-float {
+        animation: none !important;
+    }
+}
+
+@media (hover: none) {
+    .aura-card::after {
+        display: none;
+    }
+}
