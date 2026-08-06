@@ -15,7 +15,8 @@ use Modules\Commerce\Enums\Catalog\ProductType;
 
 #[Fillable([
     'title', 'slug', 'description', 'category_id', 'brand_id', 'product_type', 'status', 'vendor',
-    'is_taxable', 'requires_shipping', 'published_at', 'created_by', 'updated_by',
+    'is_taxable', 'requires_shipping', 'published_at', 'meta_title', 'meta_description', 'package_width',
+    'package_height', 'package_length', 'package_dimension_unit', 'created_by', 'updated_by',
 ])]
 class Product extends Model
 {
@@ -35,6 +36,9 @@ class Product extends Model
             'status' => ProductStatus::class,
             'is_taxable' => 'boolean',
             'requires_shipping' => 'boolean',
+            'package_width' => 'decimal:2',
+            'package_height' => 'decimal:2',
+            'package_length' => 'decimal:2',
             'published_at' => 'datetime',
         ];
     }
@@ -57,5 +61,15 @@ class Product extends Model
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class)->orderBy('position');
+    }
+
+    public function media(): HasMany
+    {
+        return $this->hasMany(ProductMedia::class)->orderBy('position');
+    }
+
+    public function tags(): HasMany
+    {
+        return $this->hasMany(ProductTag::class)->orderBy('name');
     }
 }

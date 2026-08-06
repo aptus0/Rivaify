@@ -2,6 +2,7 @@
 
 use App\Core\Security\Http\Middleware\EnsureIsRivaifyAdmin;
 use App\Core\Tenancy\Http\Middleware\EnsureStoreContext;
+use App\Core\Tenancy\Http\Middleware\EnsureStorePermission;
 use App\Core\Tenancy\Http\Middleware\EnsureStorefrontStoreContext;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -34,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'store.context' => EnsureStoreContext::class,
+            'store.permission' => EnsureStorePermission::class,
             'storefront.context' => EnsureStorefrontStoreContext::class,
             'rivaify.admin' => EnsureIsRivaifyAdmin::class,
         ]);

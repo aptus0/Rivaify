@@ -9,8 +9,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Commerce\Enums\Catalog\ProductStatus;
+use Modules\Commerce\Models\Inventory\InventoryItem;
 
 #[Fillable([
     'product_id', 'title', 'sku', 'barcode', 'price', 'compare_at_price',
@@ -57,5 +59,10 @@ class ProductVariant extends Model
     public function variantValues(): HasMany
     {
         return $this->hasMany(ProductVariantValue::class);
+    }
+
+    public function inventoryItem(): HasOne
+    {
+        return $this->hasOne(InventoryItem::class, 'product_variant_id');
     }
 }
