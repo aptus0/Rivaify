@@ -1,37 +1,66 @@
 import { Logo } from './Logo';
 
-const FOOTER_LINKS = [
-  { label: 'Platform', href: '#platform' },
-  { label: 'Gizlilik', href: '#' },
-  { label: 'Kullanım Koşulları', href: '#' },
-  { label: 'İletişim', href: '#' },
-];
+const FOOTER_COLUMNS = [
+  {
+    title: 'Ürün',
+    links: [
+      { label: 'Nasıl Çalışır', href: '#nasil-calisir' },
+      { label: 'Özellikler', href: '#ozellikler' },
+      { label: 'Entegrasyonlar', href: '#entegrasyonlar' },
+      { label: 'Temalar', href: '#temalar' },
+    ],
+  },
+  {
+    title: 'Şirket',
+    links: [
+      { label: 'Hakkımızda', href: '#hakkimizda' },
+      { label: 'Erken Erişim', href: '#erken-erisim' },
+    ],
+  },
+  {
+    title: 'Yasal',
+    links: [
+      { label: 'Gizlilik Politikası', href: '#' },
+      { label: 'Kullanım Koşulları', href: '#' },
+    ],
+  },
+] as const;
 
 export function Footer() {
   return (
-    <footer className="border-t border-dark/[0.06] px-6 py-12 lg:px-8">
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 text-center sm:flex-row sm:items-start sm:justify-between sm:text-left">
-        <div>
-          <Logo />
-          <p className="mt-2 text-sm text-dark/40">Yeni nesil e-ticaret deneyimi.</p>
+    <footer className="border-t border-dark/[0.06] px-6 pt-16 pb-10 lg:px-8">
+      <div className="mx-auto max-w-6xl">
+        <div className="grid grid-cols-2 gap-10 sm:grid-cols-4">
+          <div className="col-span-2 sm:col-span-1">
+            <Logo />
+            <p className="mt-3 max-w-[220px] text-sm leading-relaxed text-dark/40">
+              Yeni nesil sosyal ticaret ve e-ticaret platformu.
+            </p>
+          </div>
+
+          {FOOTER_COLUMNS.map((column) => (
+            <div key={column.title}>
+              <p className="text-xs font-semibold uppercase tracking-wide text-dark/35">{column.title}</p>
+              <ul className="mt-4 flex flex-col gap-3">
+                {column.links.map((link) => (
+                  <li key={link.label}>
+                    <a
+                      href={link.href}
+                      className="text-sm font-medium text-dark/60 transition-colors hover:text-dark"
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:justify-end">
-          {FOOTER_LINKS.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              className="text-sm font-medium text-dark/50 transition-colors hover:text-dark"
-            >
-              {link.label}
-            </a>
-          ))}
-        </nav>
+        <div className="mt-14 border-t border-dark/[0.06] pt-8 text-center sm:text-left">
+          <p className="text-xs text-dark/30">© 2026 Rivaify. Tüm hakları saklıdır.</p>
+        </div>
       </div>
-
-      <p className="mx-auto mt-10 max-w-6xl text-center text-xs text-dark/30 sm:text-left">
-        © 2026 Rivaify. Tüm hakları saklıdır.
-      </p>
     </footer>
   );
 }

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Logo } from '../../../components/Logo';
-import { ParticleBackground } from '../../components/effects/ParticleBackground';
+import { ParticleBackground } from '../../../components/effects/ParticleBackground';
 
 /** Login/Register/VerifyEmail shell (brief §17, updated per later feedback
  * to a single centered card over an interactive dot-field background

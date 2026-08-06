@@ -7,6 +7,7 @@ export const BRAND = {
 
 export const NAV_LINKS = [
   { label: 'Platform', href: '#platform' },
+  { label: 'Nasıl Çalışır', href: '#nasil-calisir' },
   { label: 'Özellikler', href: '#ozellikler' },
   { label: 'Entegrasyonlar', href: '#entegrasyonlar' },
   { label: 'Hakkımızda', href: '#hakkimizda' },
