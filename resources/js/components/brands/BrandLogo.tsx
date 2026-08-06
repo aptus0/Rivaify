@@ -49,13 +49,13 @@ export function BrandLogo({ brand, size = 'md', monochrome = false, showName = t
       ) : (
         <span
           className={`flex items-center justify-center rounded-control ${BADGE_SIZE[size]} ${
-            monochrome ? 'bg-dark/[0.05] text-dark/45' : 'bg-surface-orange text-primary'
+            monochrome ? 'bg-dark/[0.05] text-white/45' : 'bg-primary/20 text-primary'
           }`}
         >
           <Icon className={GLYPH_SIZE[size]} strokeWidth={2} />
         </span>
       )}
-      {showName && <span className="text-xs font-semibold text-dark/70">{integration.name}</span>}
+      {showName && <span className="text-xs font-semibold text-white/70">{integration.name}</span>}
       {showStatus && <Badge variant="soon">{STATUS_LABEL[integration.status]}</Badge>}
     </div>
   );

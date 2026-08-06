@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Button } from '../../../components/ui/Button';
+import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
 import { describeApiError } from '../../../utils/errors';
 import { createStore } from '../../store/api/storeApi';
@@ -25,13 +26,18 @@ export function CreateStoreStep() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <h2 className="text-lg font-medium">Mağazanı oluştur</h2>
-      <Input label="Mağaza adı" name="name" required placeholder="Yasemin Giyim" />
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={submitting}>
-        {submitting ? 'Oluşturuluyor…' : 'Devam Et'}
-      </Button>
-    </form>
+    <Card>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <div>
+          <h2 className="text-lg font-semibold text-dark">Mağazanı oluştur</h2>
+          <p className="mt-1 text-sm text-muted">Rivaify'da satışa başlamak için önce mağazana bir isim ver.</p>
+        </div>
+        <Input label="Mağaza adı" name="name" required placeholder="Rivaify Butik" />
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        <Button type="submit" disabled={submitting}>
+          {submitting ? 'Oluşturuluyor…' : 'Devam Et'}
+        </Button>
+      </form>
+    </Card>
   );
 }

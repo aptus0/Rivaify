@@ -1,8 +1,7 @@
 import { useEffect } from 'react';
-import Link from '@tiptap/extension-link';
 import StarterKit from '@tiptap/starter-kit';
 import { EditorContent, useEditor } from '@tiptap/react';
-import { Bold, Heading2, Italic, Link2, List, ListOrdered, Table2 } from 'lucide-react';
+import { Bold, Heading2, Italic, Link2, List, ListOrdered } from 'lucide-react';
 
 function ToolButton({
   label,
@@ -33,12 +32,13 @@ function ToolButton({
 export function RichTextEditor({ value, onChange }: { value: string; onChange: (html: string) => void }) {
   const editor = useEditor({
     extensions: [
-      StarterKit,
-      Link.configure({
-        openOnClick: false,
-        autolink: true,
-        protocols: ['http', 'https'],
-        HTMLAttributes: { rel: 'nofollow noopener noreferrer' },
+      StarterKit.configure({
+        link: {
+          openOnClick: false,
+          autolink: true,
+          protocols: ['http', 'https'],
+          HTMLAttributes: { rel: 'nofollow noopener noreferrer' },
+        },
       }),
     ],
     content: value,
@@ -75,7 +75,6 @@ export function RichTextEditor({ value, onChange }: { value: string; onChange: (
         <ToolButton label="Madde listesi" active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}><List size={16} /></ToolButton>
         <ToolButton label="Numaralı liste" active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered size={16} /></ToolButton>
         <ToolButton label="Bağlantı ekle" active={editor.isActive('link')} onClick={addLink}><Link2 size={16} /></ToolButton>
-        <ToolButton label="Tablo yakında" onClick={() => undefined}><Table2 size={16} /></ToolButton>
       </div>
       <EditorContent editor={editor} />
     </div>

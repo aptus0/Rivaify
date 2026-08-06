@@ -69,20 +69,20 @@ function MiniChart() {
  * mockup data (like any product screenshot in marketing), not live claims. */
 export function HomeDashboardPreview() {
   return (
-    <div className="overflow-hidden rounded-window border border-dark/[0.08] bg-white shadow-product">
-      <div className="flex items-center gap-1.5 border-b border-dark/[0.06] bg-surface px-4 py-3">
+    <div className="overflow-hidden rounded-window border border-white/[0.08] bg-[#0c0c0c] shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+      <div className="flex items-center gap-1.5 border-b border-white/[0.06] bg-[#141414] px-4 py-3">
         <span className="h-2.5 w-2.5 rounded-full bg-dark/15" />
         <span className="h-2.5 w-2.5 rounded-full bg-dark/15" />
         <span className="h-2.5 w-2.5 rounded-full bg-dark/15" />
-        <span className="ml-3 rounded-control bg-white px-3 py-1 text-[11px] font-medium text-dark/40">
+        <span className="ml-3 rounded-control bg-[#0c0c0c] px-3 py-1 text-[11px] font-medium text-white/40">
           app.rivaify.com/panel
         </span>
       </div>
 
       <div className="flex">
-        <aside className="hidden w-52 shrink-0 border-r border-dark/[0.06] bg-surface/60 p-4 sm:block">
+        <aside className="hidden w-52 shrink-0 border-r border-white/[0.06] bg-[#141414]/60 p-4 sm:block">
           <div className="mb-6 px-2">
-            <span className="text-base font-extrabold tracking-tight text-dark">
+            <span className="text-base font-extrabold tracking-tight text-white">
               Riva<span className="text-primary">ify</span>
             </span>
           </div>
@@ -91,7 +91,7 @@ export function HomeDashboardPreview() {
               <div
                 key={item.label}
                 className={`flex items-center gap-2.5 rounded-control px-3 py-2 text-[13px] font-medium ${
-                  item.active ? 'bg-primary text-white' : 'text-dark/50'
+                  item.active ? 'bg-primary text-white' : 'text-white/50'
                 }`}
               >
                 <item.icon className="h-4 w-4" strokeWidth={2} />
@@ -104,50 +104,50 @@ export function HomeDashboardPreview() {
         <div className="min-w-0 flex-1 p-5 sm:p-7">
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-bold text-dark">Genel Bakış</h3>
-              <p className="text-xs text-dark/40">Mağazanın performansına hızlı bir bakış</p>
+              <h3 className="text-lg font-bold text-white">Genel Bakış</h3>
+              <p className="text-xs text-white/40">Mağazanın performansına hızlı bir bakış</p>
             </div>
-            <div className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-orange text-sm font-bold text-primary sm:flex">
+            <div className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-sm font-bold text-primary sm:flex">
               R
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {STAT_CARDS.map((card) => (
-              <div key={card.label} className="rounded-control border border-dark/[0.06] bg-white p-4">
-                <p className="text-[11px] font-medium text-dark/40">{card.label}</p>
-                <p className="mt-1.5 text-lg font-bold text-dark sm:text-xl">{card.value}</p>
+              <div key={card.label} className="rounded-control border border-white/[0.06] bg-[#0c0c0c] p-4">
+                <p className="text-[11px] font-medium text-white/40">{card.label}</p>
+                <p className="mt-1.5 text-lg font-bold text-white sm:text-xl">{card.value}</p>
                 <p className="mt-1 text-[11px] font-semibold text-primary">{card.delta}</p>
               </div>
             ))}
           </div>
 
           <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-5">
-            <div className="rounded-control border border-dark/[0.06] bg-white p-4 lg:col-span-3">
+            <div className="rounded-control border border-white/[0.06] bg-[#0c0c0c] p-4 lg:col-span-3">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-dark/60">Bugünkü satışlar</p>
-                <span className="text-[11px] font-medium text-dark/30">Son 12 saat</span>
+                <p className="text-xs font-semibold text-white/60">Bugünkü satışlar</p>
+                <span className="text-[11px] font-medium text-white/30">Son 12 saat</span>
               </div>
               <div className="mt-3">
                 <MiniChart />
               </div>
             </div>
 
-            <div className="rounded-control border border-dark/[0.06] bg-white p-4 lg:col-span-2">
+            <div className="rounded-control border border-white/[0.06] bg-[#0c0c0c] p-4 lg:col-span-2">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-dark/60">Son siparişler</p>
+                <p className="text-xs font-semibold text-white/60">Son siparişler</p>
                 <span className="text-[11px] font-medium text-primary">Tümü</span>
               </div>
               <div className="mt-3 flex flex-col gap-2.5">
                 {RECENT_ORDERS.map((order) => (
                   <div key={order.id} className="flex items-center justify-between text-[11px]">
                     <div>
-                      <p className="font-semibold text-dark">{order.id}</p>
-                      <p className="text-dark/40">{order.customer}</p>
+                      <p className="font-semibold text-white">{order.id}</p>
+                      <p className="text-white/40">{order.customer}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-dark">{order.amount}</p>
-                      <p className="text-dark/40">{order.status}</p>
+                      <p className="font-semibold text-white">{order.amount}</p>
+                      <p className="text-white/40">{order.status}</p>
                     </div>
                   </div>
                 ))}
@@ -155,14 +155,14 @@ export function HomeDashboardPreview() {
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-between rounded-control border border-dark/[0.06] bg-white p-4">
+          <div className="mt-4 flex items-center justify-between rounded-control border border-white/[0.06] bg-[#0c0c0c] p-4">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-control bg-surface-orange text-primary">
+              <span className="flex h-8 w-8 items-center justify-center rounded-control bg-primary/20 text-primary">
                 <TrendingUp className="h-4 w-4" strokeWidth={2.5} />
               </span>
               <div>
-                <p className="text-xs font-semibold text-dark">Stok durumu sağlıklı</p>
-                <p className="text-[11px] text-dark/40">248 üründe stok senkronize</p>
+                <p className="text-xs font-semibold text-white">Stok durumu sağlıklı</p>
+                <p className="text-[11px] text-white/40">248 üründe stok senkronize</p>
               </div>
             </div>
             <div className="hidden h-1.5 w-28 overflow-hidden rounded-full bg-dark/[0.06] sm:block">

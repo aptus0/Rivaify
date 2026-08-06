@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Archive, CheckSquare, ChevronDown, Copy, Download, Filter, Plus, Upload, X } from 'lucide-react';
+import { Archive, CheckSquare, ChevronDown, Copy, Download, Filter, Plus, Trash2, Upload, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { usePageTitle } from '../../../app/layouts/AppLayout';
 import { Badge } from '../../../components/ui/Badge';
@@ -23,9 +23,13 @@ type ProductFilters = {
   brandId: string;
   productType: string;
   inventoryStatus: InventoryStatus | '';
+  createdFrom: string;
+  createdTo: string;
+  updatedFrom: string;
+  updatedTo: string;
 };
 
-const EMPTY_FILTERS: ProductFilters = { status: '', categoryId: '', brandId: '', productType: '', inventoryStatus: '' };
+const EMPTY_FILTERS: ProductFilters = { status: '', categoryId: '', brandId: '', productType: '', inventoryStatus: '', createdFrom: '', createdTo: '', updatedFrom: '', updatedTo: '' };
 
 function formatDate(value: string | null): string {
   if (!value) return '-';
@@ -60,6 +64,7 @@ export function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkCategoryId, setBulkCategoryId] = useState('');
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedSearch(searchInput), 300);
@@ -82,6 +87,10 @@ export function ProductsPage() {
       brand_id: filters.brandId || undefined,
       product_type: filters.productType || undefined,
       inventory_status: filters.inventoryStatus || undefined,
+      created_from: filters.createdFrom || undefined,
+      created_to: filters.createdTo || undefined,
+      updated_from: filters.updatedFrom || undefined,
+      updated_to: filters.updatedTo || undefined,
       page: String(page),
     })
       .then((response) => {
@@ -119,15 +128,27 @@ export function ProductsPage() {
     });
   }
 
-  async function applyBulk(action: 'activate' | 'draft' | 'archive' | 'delete') {
-    if (selected.size === 0) return;
-    if (action === 'delete' && !window.confirm(`${selected.size} ürün silinsin mi?`)) return;
+  async function applyBulk(action: 'activate' | 'draft' | 'archive' | 'delete' | 'change_category', productIds = Array.from(selected)) {
+    if (productIds.length === 0) return;
+    if (action === 'delete' && !window.confirm(`${productIds.length} ürün silinsin mi?`)) return;
+    if (action === 'change_category' && !bulkCategoryId) return;
     setBulkBusy(true);
     try {
-      await bulkUpdateProducts({ product_ids: Array.from(selected), action });
+      await bulkUpdateProducts({ product_ids: productIds, action, category_id: action === 'change_category' ? bulkCategoryId : undefined });
       setPage(1);
       setSelected(new Set());
-      const response = await listProducts({ q: debouncedSearch.trim() || undefined });
+      const response = await listProducts({
+        q: debouncedSearch.trim() || undefined,
+        status: filters.status || undefined,
+        category_id: filters.categoryId || undefined,
+        brand_id: filters.brandId || undefined,
+        product_type: filters.productType || undefined,
+        inventory_status: filters.inventoryStatus || undefined,
+        created_from: filters.createdFrom || undefined,
+        created_to: filters.createdTo || undefined,
+        updated_from: filters.updatedFrom || undefined,
+        updated_to: filters.updatedTo || undefined,
+      });
       setProducts(response.data);
       setCounts(response.summary);
       setLastPage(response.meta.last_page);
@@ -154,6 +175,10 @@ export function ProductsPage() {
     filters.brandId && { key: 'brandId' as const, label: `Marka: ${catalog?.brands.find((brand) => brand.id === filters.brandId)?.name ?? ''}` },
     filters.productType && { key: 'productType' as const, label: `Tip: ${filters.productType}` },
     filters.inventoryStatus && { key: 'inventoryStatus' as const, label: `Stok: ${filters.inventoryStatus === 'low_stock' ? 'Az stok' : filters.inventoryStatus === 'out_of_stock' ? 'Stokta yok' : 'Stokta'}` },
+    filters.createdFrom && { key: 'createdFrom' as const, label: `Oluşturma başlangıç: ${filters.createdFrom}` },
+    filters.createdTo && { key: 'createdTo' as const, label: `Oluşturma bitiş: ${filters.createdTo}` },
+    filters.updatedFrom && { key: 'updatedFrom' as const, label: `Güncelleme başlangıç: ${filters.updatedFrom}` },
+    filters.updatedTo && { key: 'updatedTo' as const, label: `Güncelleme bitiş: ${filters.updatedTo}` },
   ].filter(Boolean) as Array<{ key: keyof ProductFilters; label: string }>;
 
   return (
@@ -205,16 +230,24 @@ export function ProductsPage() {
               <label className="text-xs font-semibold text-muted">Marka<select value={filters.brandId} onChange={(event) => setFilter('brandId', event.target.value)} className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-dark"><option value="">Tümü</option>{catalog?.brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select></label>
               <label className="text-xs font-semibold text-muted">Ürün tipi<select value={filters.productType} onChange={(event) => setFilter('productType', event.target.value)} className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-dark"><option value="">Tümü</option><option value="physical">Fiziksel</option><option value="digital">Dijital</option><option value="service">Hizmet</option></select></label>
               <label className="text-xs font-semibold text-muted">Stok durumu<select value={filters.inventoryStatus} onChange={(event) => setFilter('inventoryStatus', event.target.value as InventoryStatus | '')} className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-dark"><option value="">Tümü</option><option value="in_stock">Stokta</option><option value="low_stock">Az stok</option><option value="out_of_stock">Stokta yok</option></select></label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="text-xs font-semibold text-muted">Oluşturma başlangıç<input type="date" value={filters.createdFrom} onChange={(event) => setFilter('createdFrom', event.target.value)} className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-dark" /></label>
+                <label className="text-xs font-semibold text-muted">Oluşturma bitiş<input type="date" value={filters.createdTo} onChange={(event) => setFilter('createdTo', event.target.value)} className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-dark" /></label>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="text-xs font-semibold text-muted">Güncelleme başlangıç<input type="date" value={filters.updatedFrom} onChange={(event) => setFilter('updatedFrom', event.target.value)} className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-dark" /></label>
+                <label className="text-xs font-semibold text-muted">Güncelleme bitiş<input type="date" value={filters.updatedTo} onChange={(event) => setFilter('updatedTo', event.target.value)} className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-dark" /></label>
+              </div>
             </div>
           </details>
         </TableToolbar>
 
         {activeFilters.length > 0 && <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">{activeFilters.map((filter) => <button key={filter.key} onClick={() => setFilter(filter.key, '')} className="inline-flex items-center gap-1 rounded-full bg-surface-orange px-2.5 py-1 text-xs font-medium text-primary-hover">{filter.label}<X size={13} /></button>)}<button onClick={() => { setFilters(EMPTY_FILTERS); setPage(1); }} className="text-xs font-medium text-muted hover:text-dark">Filtreleri temizle</button></div>}
 
-        {selected.size > 0 && <div className="flex flex-wrap items-center gap-2 border-b border-primary/20 bg-surface-orange px-4 py-3"><span className="mr-2 text-sm font-semibold text-dark">{selected.size} ürün seçildi</span><Button fullWidth={false} variant="secondary" disabled={bulkBusy} onClick={() => void applyBulk('activate')}>Aktif Yap</Button><Button fullWidth={false} variant="secondary" disabled={bulkBusy} onClick={() => void applyBulk('draft')}>Taslak Yap</Button><Button fullWidth={false} variant="secondary" disabled={bulkBusy} onClick={() => void applyBulk('archive')}>Arşivle</Button><Button fullWidth={false} variant="secondary" disabled={bulkBusy} onClick={() => void applyBulk('delete')}>Sil</Button></div>}
+        {selected.size > 0 && <div className="flex flex-wrap items-center gap-2 border-b border-primary/20 bg-surface-orange px-4 py-3"><span className="mr-2 text-sm font-semibold text-dark">{selected.size} ürün seçildi</span><Button fullWidth={false} variant="secondary" disabled={bulkBusy} onClick={() => void applyBulk('activate')}>Aktif Yap</Button><Button fullWidth={false} variant="secondary" disabled={bulkBusy} onClick={() => void applyBulk('draft')}>Taslak Yap</Button><label className="flex items-center gap-1 text-xs text-muted"><select value={bulkCategoryId} onChange={(event) => setBulkCategoryId(event.target.value)} className="rounded-md border border-border bg-card px-2 py-2 text-sm text-dark"><option value="">Kategori değiştir</option>{catalog?.categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select><Button fullWidth={false} variant="secondary" disabled={bulkBusy || !bulkCategoryId} onClick={() => void applyBulk('change_category')}>Uygula</Button></label><Button fullWidth={false} variant="secondary" disabled={bulkBusy} onClick={() => void applyBulk('archive')}>Arşivle</Button><Button fullWidth={false} variant="secondary" disabled={bulkBusy} onClick={() => void applyBulk('delete')}>Sil</Button></div>}
 
         {error && <p className="border-b border-border px-4 py-3 text-sm text-red-600">{error}</p>}
-        {loading ? <ProductsSkeleton /> : products.length === 0 ? <ProductsEmpty searchActive={Boolean(searchInput || activeFilters.length)} /> : <ProductsTable products={products} selected={selected} onToggle={toggleSelected} onDuplicate={(id) => void duplicate(id)} onArchive={(id) => { setSelected(new Set([id])); void applyBulk('archive'); }} />}
+        {loading ? <ProductsSkeleton /> : products.length === 0 ? <ProductsEmpty searchActive={Boolean(searchInput || activeFilters.length)} /> : <ProductsTable products={products} selected={selected} onToggle={toggleSelected} onDuplicate={(id) => void duplicate(id)} onArchive={(id) => void applyBulk('archive', [id])} onDelete={(id) => void applyBulk('delete', [id])} />}
         <Pagination currentPage={page} lastPage={lastPage} onChange={setPage} />
       </Card>
       <p className="text-xs text-muted">{total} ürün gösteriliyor</p>
@@ -228,12 +261,14 @@ function ProductsTable({
   onToggle,
   onDuplicate,
   onArchive,
+  onDelete,
 }: {
   products: ProductSummary[];
   selected: Set<string>;
   onToggle: (id: string) => void;
   onDuplicate: (id: string) => void;
   onArchive: (id: string) => void;
+  onDelete: (id: string) => void;
 }) {
   const allSelected = products.length > 0 && products.every((product) => selected.has(product.id));
 
@@ -244,7 +279,7 @@ function ProductsTable({
           <table className="min-w-[1020px] w-full text-left text-sm">
             <thead className="border-b border-border bg-app-bg text-xs font-semibold uppercase tracking-wide text-muted"><tr><th className="w-12 px-4 py-3"><input type="checkbox" checked={allSelected} onChange={() => products.forEach((product) => { if (allSelected === selected.has(product.id)) onToggle(product.id); })} aria-label="Tüm ürünleri seç" className="h-4 w-4 accent-primary" /></th><th className="px-4 py-3">Ürün</th><th className="px-4 py-3">Durum</th><th className="px-4 py-3">Envanter</th><th className="px-4 py-3">Kategori</th><th className="px-4 py-3">Marka</th><th className="px-4 py-3">Kanallar</th><th className="px-4 py-3">Güncelleme</th><th className="px-4 py-3"><span className="sr-only">İşlemler</span></th></tr></thead>
             <tbody className="divide-y divide-border">
-              {products.map((product) => <tr key={product.id} className="hover:bg-app-bg/60"><td className="px-4 py-4"><input type="checkbox" checked={selected.has(product.id)} onChange={() => onToggle(product.id)} aria-label={`${product.title} seç`} className="h-4 w-4 accent-primary" /></td><td className="px-4 py-4"><Link to={`/products/${product.id}`} className="flex items-center gap-3"><ProductThumbnail product={product} /><span><span className="block font-medium text-dark hover:text-primary-hover">{product.title}</span><span className="mt-0.5 block text-xs text-muted">{product.variant_count} varyant</span></span></Link></td><td className="px-4 py-4"><ProductStatusBadge status={product.status} /></td><td className="px-4 py-4"><Badge tone={inventoryTone(product.inventory.status)}>{inventoryLabel(product)}</Badge></td><td className="px-4 py-4 text-muted">{product.category?.name ?? '-'}</td><td className="px-4 py-4 text-muted">{product.brand?.name ?? '-'}</td><td className="px-4 py-4"><span className="text-xs text-dark">Online Mağaza</span></td><td className="px-4 py-4 text-muted">{formatDate(product.updated_at)}</td><td className="px-4 py-4"><details className="relative"><summary className="cursor-pointer list-none rounded p-1 text-muted hover:bg-app-bg hover:text-dark">•••</summary><div className="absolute right-0 z-10 mt-1 w-32 rounded-md border border-border bg-card py-1 shadow-lg"><Link to={`/products/${product.id}`} className="block px-3 py-2 text-sm text-dark hover:bg-app-bg">Düzenle</Link><button onClick={() => onDuplicate(product.id)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-dark hover:bg-app-bg"><Copy size={14} />Kopyala</button><button onClick={() => onArchive(product.id)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-dark hover:bg-app-bg"><Archive size={14} />Arşivle</button></div></details></td></tr>)}
+              {products.map((product) => <tr key={product.id} className="hover:bg-app-bg/60"><td className="px-4 py-4"><input type="checkbox" checked={selected.has(product.id)} onChange={() => onToggle(product.id)} aria-label={`${product.title} seç`} className="h-4 w-4 accent-primary" /></td><td className="px-4 py-4"><Link to={`/products/${product.id}`} className="flex items-center gap-3"><ProductThumbnail product={product} /><span><span className="block font-medium text-dark hover:text-primary-hover">{product.title}</span><span className="mt-0.5 block text-xs text-muted">{product.variant_count} varyant</span></span></Link></td><td className="px-4 py-4"><ProductStatusBadge status={product.status} /></td><td className="px-4 py-4"><Badge tone={inventoryTone(product.inventory.status)}>{inventoryLabel(product)}</Badge></td><td className="px-4 py-4 text-muted">{product.category?.name ?? '-'}</td><td className="px-4 py-4 text-muted">{product.brand?.name ?? '-'}</td><td className="px-4 py-4"><span className="text-xs text-dark">Online Mağaza</span></td><td className="px-4 py-4 text-muted">{formatDate(product.updated_at)}</td><td className="px-4 py-4"><details className="relative"><summary className="cursor-pointer list-none rounded p-1 text-muted hover:bg-app-bg hover:text-dark">•••</summary><div className="absolute right-0 z-10 mt-1 w-32 rounded-md border border-border bg-card py-1 shadow-lg"><Link to={`/products/${product.id}`} className="block px-3 py-2 text-sm text-dark hover:bg-app-bg">Düzenle</Link><button onClick={() => onDuplicate(product.id)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-dark hover:bg-app-bg"><Copy size={14} />Kopyala</button><button onClick={() => onArchive(product.id)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-dark hover:bg-app-bg"><Archive size={14} />Arşivle</button><button onClick={() => onDelete(product.id)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"><Trash2 size={14} />Sil</button></div></details></td></tr>)}
             </tbody>
           </table>
         </DataTable>

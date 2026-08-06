@@ -7,11 +7,14 @@ use App\Core\Tenancy\Scopes\StoreScope;
 use App\Models\User;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 use Modules\Commerce\Enums\Catalog\BrandStatus;
 use Modules\Commerce\Enums\Catalog\CategoryStatus;
+use Modules\Commerce\Enums\Catalog\ProductStatus;
 use Modules\Commerce\Models\Catalog\Brand;
 use Modules\Commerce\Models\Catalog\Category;
+use Modules\Commerce\Models\Catalog\Product;
 use Modules\Commerce\Models\Inventory\InventoryLocation;
 use Modules\Merchant\Models\Merchant;
 use Modules\Store\Enums\StoreUserRole;
@@ -120,6 +123,59 @@ class AdminProductApiTest extends TestCase
             ->assertForbidden();
 
         $this->assertNotNull($owner);
+    }
+
+    public function test_owner_can_filter_by_created_date_and_change_category_in_bulk(): void
+    {
+        [$owner, $store] = $this->makeStoreWithUser('Product Filter Store', StoreUserRole::Owner);
+        app(CurrentStore::class)->set($store);
+        $oldCategory = Category::query()->create([
+            'name' => 'Eski Kategori',
+            'slug' => 'eski-kategori-'.str()->random(6),
+            'status' => CategoryStatus::Active,
+        ]);
+        $newCategory = Category::query()->create([
+            'name' => 'Yeni Kategori',
+            'slug' => 'yeni-kategori-'.str()->random(6),
+            'status' => CategoryStatus::Active,
+        ]);
+        $oldProduct = Product::query()->create([
+            'title' => 'Eski Ürün',
+            'slug' => 'eski-urun-'.str()->random(6),
+            'category_id' => $oldCategory->id,
+            'status' => ProductStatus::Draft,
+        ]);
+        $recentProduct = Product::query()->create([
+            'title' => 'Yeni Ürün',
+            'slug' => 'yeni-urun-'.str()->random(6),
+            'category_id' => $oldCategory->id,
+            'status' => ProductStatus::Draft,
+        ]);
+        DB::table('products')->where('id', $oldProduct->id)->update([
+            'created_at' => now()->subDays(14),
+            'updated_at' => now()->subDays(7),
+        ]);
+        app(CurrentStore::class)->clear();
+        Sanctum::actingAs($owner);
+
+        $this->withSession(['current_store_id' => $store->id])
+            ->getJson('/api/v1/products?created_from='.now()->subDays(2)->toDateString())
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.id', $recentProduct->ulid);
+
+        $this->withSession(['current_store_id' => $store->id])
+            ->postJson('/api/v1/products/bulk', [
+                'product_ids' => [$recentProduct->ulid],
+                'action' => 'change_category',
+                'category_id' => $newCategory->ulid,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.updated_count', 1);
+
+        app(CurrentStore::class)->set($store);
+        $this->assertSame($newCategory->id, $recentProduct->fresh()->category_id);
+        app(CurrentStore::class)->clear();
     }
 
     /**

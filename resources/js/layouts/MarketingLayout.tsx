@@ -23,7 +23,7 @@ export function MarketingLayout({ children, title, description }: MarketingLayou
   const reducedMotion = useReducedMotion();
 
   return (
-    <div className="min-h-screen bg-white font-sans text-dark">
+    <div className="min-h-screen bg-[#050505] font-sans text-white/90 selection:bg-primary/30 selection:text-white">
       {(title || description) && (
         <Head>
           {title && <title>{title}</title>}

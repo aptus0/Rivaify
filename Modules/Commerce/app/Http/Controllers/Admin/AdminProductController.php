@@ -34,6 +34,10 @@ class AdminProductController extends Controller
             'brand_id' => ['nullable', 'string', 'size:26'],
             'product_type' => ['nullable', 'string', 'in:'.implode(',', array_map(fn (ProductType $type) => $type->value, ProductType::cases()))],
             'inventory_status' => ['nullable', 'in:in_stock,low_stock,out_of_stock'],
+            'created_from' => ['nullable', 'date'],
+            'created_to' => ['nullable', 'date'],
+            'updated_from' => ['nullable', 'date'],
+            'updated_to' => ['nullable', 'date'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
         $products = Product::query()
@@ -311,6 +315,18 @@ class AdminProductController extends Controller
                 'low_stock' => $query->whereRaw("{$expression} BETWEEN 1 AND 5"),
                 'in_stock' => $query->whereRaw("{$expression} > 5"),
             };
+        }
+        if (isset($filters['created_from'])) {
+            $query->whereDate('created_at', '>=', $filters['created_from']);
+        }
+        if (isset($filters['created_to'])) {
+            $query->whereDate('created_at', '<=', $filters['created_to']);
+        }
+        if (isset($filters['updated_from'])) {
+            $query->whereDate('updated_at', '>=', $filters['updated_from']);
+        }
+        if (isset($filters['updated_to'])) {
+            $query->whereDate('updated_at', '<=', $filters['updated_to']);
         }
     }
 

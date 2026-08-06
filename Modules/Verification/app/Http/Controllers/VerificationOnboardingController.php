@@ -22,7 +22,9 @@ class VerificationOnboardingController extends Controller
         ]);
 
         $store = $currentStore->store();
-        $verificationRequest = $store->verificationRequests()->firstOrCreate([]);
+        $verificationRequest = $store->verificationRequests()->firstOrCreate([
+            'merchant_id' => $store->merchant->id,
+        ]);
 
         $document = $action->handle(
             $verificationRequest,

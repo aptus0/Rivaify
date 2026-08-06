@@ -15,7 +15,7 @@ export function SectionHeading({
   title,
   description,
   align = 'center',
-  onDark = false,
+  onDark = true,
   className = '',
 }: SectionHeadingProps) {
   const alignClass = align === 'center' ? 'mx-auto text-center items-center' : 'text-left items-start';

@@ -14,7 +14,7 @@ export function BrandGrid({ categories, showStatus = true, className = '' }: Bra
     <div className={`grid grid-cols-1 gap-6 sm:grid-cols-3 ${className}`}>
       {categories.map((category) => (
         <div key={category}>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-dark/35">{CATEGORY_LABEL[category]}</p>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-white/35">{CATEGORY_LABEL[category]}</p>
           <div className="mt-3 flex flex-wrap gap-4">
             {integrationsByCategory(category).map((integration) => (
               <BrandLogo key={integration.key} brand={integration.key} size="sm" showStatus={showStatus} />

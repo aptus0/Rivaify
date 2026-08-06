@@ -20,14 +20,14 @@ const RADIUS_CLASSES = {
 } as const;
 
 const VARIANT_CLASSES: Record<RivaCardVariant, string> = {
-  default: 'border border-dark/[0.08] bg-white shadow-xs',
-  subtle: 'border border-dark/[0.06] bg-surface',
-  dark: 'border border-white/10 bg-soft-dark text-white',
+  default: 'border border-white/10 bg-white/[0.03] text-white shadow-lg backdrop-blur-sm',
+  subtle: 'border border-white/5 bg-white/[0.02] text-white/90',
+  dark: 'border border-white/10 bg-black/60 text-white backdrop-blur-md',
   glass: 'border border-white/15 bg-white/[0.06] text-white backdrop-blur-xl',
-  highlight: 'border-2 border-primary/25 bg-surface-orange',
+  highlight: 'border-2 border-primary/40 bg-primary/10 text-white shadow-[0_0_15px_rgba(255,107,0,0.1)]',
   // spectrum's own visible surface is transparent — the riva-card::before/
   // ::after pseudo-elements (focus-spectrum.css) supply the border+glow.
-  spectrum: 'border border-dark/[0.08] bg-white',
+  spectrum: 'border border-white/10 bg-white/[0.03] text-white',
 };
 
 interface RivaCardProps extends HTMLAttributes<HTMLDivElement> {

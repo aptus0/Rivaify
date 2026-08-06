@@ -33,7 +33,7 @@ export function OnboardingPage() {
   const status = store?.onboarding_status ?? 'account_created';
 
   return (
-    <div className="mx-auto mt-12 w-full max-w-md">
+    <div className="mx-auto mt-12 w-full max-w-xl px-4">
       <ProgressBar step={store?.onboarding_step ?? 1} label={STEP_LABELS[status]} />
       {renderStep(status)}
     </div>

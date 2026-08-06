@@ -26,6 +26,10 @@ export function listProducts(filters: {
   brand_id?: string;
   product_type?: string;
   inventory_status?: string;
+  created_from?: string;
+  created_to?: string;
+  updated_from?: string;
+  updated_to?: string;
   page?: string;
 }): Promise<ProductsResponse> {
   return apiRequest(`/api/v1/products${queryString(filters)}`);

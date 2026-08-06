@@ -17,23 +17,23 @@ export function HomeHero() {
 
       <div className="relative mx-auto max-w-4xl px-6 text-center lg:px-8">
         <Reveal>
-          <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-surface-orange px-4 py-1.5 text-sm font-medium text-primary">
+          <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary shadow-[0_0_15px_rgba(255,107,0,0.15)]">
             Yeni nesil ticaret altyapısı
           </span>
         </Reveal>
 
         <Reveal delay={0.08}>
-          <h1 className="mt-8 text-5xl font-extrabold leading-[1.05] tracking-tight text-dark sm:text-6xl lg:text-[76px]">
+          <h1 className="mt-8 text-5xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-[76px]">
             Mağazanı kur.
             <br />
             Her yerde sat.
             <br />
-            <span className="text-primary">Tek yerden yönet.</span>
+            <span className="text-primary drop-shadow-[0_0_20px_rgba(255,107,0,0.3)]">Tek yerden yönet.</span>
           </h1>
         </Reveal>
 
         <Reveal delay={0.16}>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-dark/55">
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/60">
             Rivaify, ürünlerinden siparişlerine ve sosyal satış kanallarından mağaza tasarımına kadar
             e-ticaret operasyonunu tek platformda birleştirir.
           </p>

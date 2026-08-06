@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Button } from '../../../components/ui/Button';
+import { Card } from '../../../components/ui/Card';
+import { Select } from '../../../components/ui/Select';
 import { describeApiError } from '../../../utils/errors';
 import { submitVerificationRequest, uploadVerificationDocument, type DocumentType } from '../../verification/api/verificationApi';
 import { useAuth } from '../../../app/providers/AuthProvider';
@@ -55,36 +57,58 @@ export function DocumentsStep() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h2 className="mb-4 text-lg font-medium">Belgeler</h2>
-        <form onSubmit={handleUpload} className="flex flex-col gap-3">
-          <select name="type" className="rounded-md border border-neutral-300 px-3 py-2 text-sm" required>
+    <Card>
+      <div className="flex flex-col gap-6">
+        <div>
+          <h2 className="text-lg font-semibold text-dark">Belgeler</h2>
+          <p className="mt-1 text-sm text-muted">
+            Doğrulama için vergi levhanı, kimliğini ve varsa imza sirkülerini yükle.
+          </p>
+        </div>
+
+        <form onSubmit={handleUpload} className="flex flex-col gap-3 rounded-lg border border-dashed border-neutral-300 p-4">
+          <Select label="Belge türü" name="type" placeholder="Belge türü seçin" required>
             {DOCUMENT_TYPES.map((t) => (
               <option key={t.value} value={t.value}>
                 {t.label}
               </option>
             ))}
-          </select>
-          <input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" required className="text-sm" />
+          </Select>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="file" className="text-sm font-medium text-neutral-700">
+              Dosya
+            </label>
+            <input
+              id="file"
+              type="file"
+              name="file"
+              accept=".pdf,.jpg,.jpeg,.png"
+              required
+              className="rounded-md border border-neutral-300 px-3 py-2 text-sm file:mr-3 file:rounded file:border-0 file:bg-app-bg file:px-3 file:py-1 file:text-sm file:font-medium file:text-dark"
+            />
+          </div>
           <Button type="submit" disabled={uploading}>
             {uploading ? 'Yükleniyor…' : 'Belge Yükle'}
           </Button>
         </form>
+
         {uploaded.length > 0 && (
-          <ul className="mt-3 list-inside list-disc text-sm text-neutral-600">
+          <ul className="flex flex-col gap-2 text-sm text-neutral-700">
             {uploaded.map((name) => (
-              <li key={name}>{name}</li>
+              <li key={name} className="flex items-center gap-2 rounded-md bg-app-bg px-3 py-2">
+                <span aria-hidden className="text-green-600">✓</span>
+                {name}
+              </li>
             ))}
           </ul>
         )}
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+
+        <Button onClick={() => void handleSubmitForReview()} disabled={submitting || uploaded.length === 0}>
+          {submitting ? 'Gönderiliyor…' : 'Doğrulama Başvurusunu Gönder'}
+        </Button>
       </div>
-
-      {error && <p className="text-sm text-red-600">{error}</p>}
-
-      <Button onClick={() => void handleSubmitForReview()} disabled={submitting || uploaded.length === 0}>
-        {submitting ? 'Gönderiliyor…' : 'Doğrulama Başvurusunu Gönder'}
-      </Button>
-    </div>
+    </Card>
   );
 }

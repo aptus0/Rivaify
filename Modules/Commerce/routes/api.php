@@ -26,3 +26,8 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'store.context'])->group(functi
 		Route::post('/catalog/brands', [AdminCatalogLookupController::class, 'storeBrand']);
 	});
 });
+
+Route::prefix('v1/storefront')->group(function () {
+    Route::post('/checkout/initialize', [\Modules\Commerce\Http\Controllers\CheckoutController::class, 'initialize']);
+    Route::post('/checkout/callback', [\Modules\Commerce\Http\Controllers\CheckoutController::class, 'callback']);
+});

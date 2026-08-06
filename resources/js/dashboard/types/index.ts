@@ -15,6 +15,7 @@ export interface CurrentUser {
   name: string;
   email: string;
   email_verified: boolean;
+  is_rivaify_admin: boolean;
 }
 
 export interface CurrentStoreSummary {

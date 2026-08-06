@@ -5,7 +5,7 @@ import { INTEGRATIONS } from '../../../../data/integrations';
 
 export function HomeBrandEcosystem() {
   return (
-    <section className="border-y border-dark/[0.06] bg-surface py-16">
+    <section className="border-y border-white/[0.06] bg-[#141414] py-16">
       <Container>
         <SectionHeading title="İşletmenin kullandığı servisleri tek merkeze bağla." />
       </Container>

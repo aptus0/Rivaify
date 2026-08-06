@@ -66,7 +66,7 @@ class MerchantOnboardingController extends Controller
         $validated = $request->validate([
             'tax_number' => ['required', 'string', 'max:255'],
             'legal_entity_name' => ['required', 'string', 'max:255'],
-            'tax_office' => ['nullable', 'string', 'max:255'],
+            'tax_office' => ['required', 'string', 'max:255'],
         ]);
 
         $store = $currentStore->store();

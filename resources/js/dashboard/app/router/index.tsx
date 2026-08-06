@@ -3,6 +3,7 @@ import { AppLayout } from '../layouts/AppLayout';
 import { GuestLayout } from '../layouts/GuestLayout';
 import { OnboardingLayout } from '../layouts/OnboardingLayout';
 import { RequireAuth } from './RequireAuth';
+import { RequireStore } from './RequireStore';
 import { RootRedirect } from './RootRedirect';
 import { LoginPage } from '../../features/auth/pages/LoginPage';
 import { RegisterPage } from '../../features/auth/pages/RegisterPage';
@@ -11,6 +12,10 @@ import { OnboardingPage } from '../../features/onboarding/pages/OnboardingPage';
 import { DashboardPage } from '../../features/dashboard/pages/DashboardPage';
 import { ProductsPage } from '../../features/products/pages/ProductsPage';
 import { ProductEditorPage } from '../../features/products/pages/ProductEditorPage';
+import { RequireAdmin } from './RequireAdmin';
+import { AdminLayout } from '../../features/admin/pages/AdminLayout';
+import { VerificationQueue } from '../../features/admin/pages/VerificationQueue';
+import { MerchantManagement } from '../../features/admin/pages/MerchantManagement';
 
 // Served on its own host (app.rivaify.com, brief §11) via Route::domain()
 // in routes/web.php — no path prefix, so basename is just '/'. Requires a
@@ -60,7 +65,9 @@ export const router = createBrowserRouter(
       path: '/dashboard',
       element: (
         <RequireAuth>
-          <AppLayout />
+          <RequireStore>
+            <AppLayout />
+          </RequireStore>
         </RequireAuth>
       ),
       children: [
@@ -71,13 +78,29 @@ export const router = createBrowserRouter(
       path: '/products',
       element: (
         <RequireAuth>
-          <AppLayout />
+          <RequireStore>
+            <AppLayout />
+          </RequireStore>
         </RequireAuth>
       ),
       children: [
         { index: true, element: <ProductsPage /> },
         { path: 'create', element: <ProductEditorPage /> },
         { path: ':productId', element: <ProductEditorPage /> },
+      ],
+    },
+    {
+      path: '/admin',
+      element: (
+        <RequireAuth>
+          <RequireAdmin>
+            <AdminLayout />
+          </RequireAdmin>
+        </RequireAuth>
+      ),
+      children: [
+        { path: 'queue', element: <VerificationQueue /> },
+        { path: 'merchants', element: <MerchantManagement /> },
       ],
     },
   ],

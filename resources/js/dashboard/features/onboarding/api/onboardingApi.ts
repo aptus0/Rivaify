@@ -22,7 +22,7 @@ export interface BusinessProfileInput {
 export interface TaxProfileInput {
   tax_number: string;
   legal_entity_name: string;
-  tax_office?: string;
+  tax_office: string;
 }
 
 export function submitBusinessProfile(payload: BusinessProfileInput): Promise<{ data: { id: string } }> {

@@ -28,12 +28,12 @@ export function HomeFloatingChips() {
           key={chip.label}
           animate={reducedMotion ? undefined : { y: [0, -6, 0] }}
           transition={{ duration: chip.duration, repeat: Infinity, ease: 'easeInOut', delay: chip.delay }}
-          className={`absolute z-20 hidden items-center gap-2 rounded-control border border-dark/[0.07] bg-white px-3.5 py-2.5 shadow-floating sm:flex ${chip.position}`}
+          className={`absolute z-20 hidden items-center gap-2 rounded-control border border-white/[0.07] bg-[#0c0c0c] px-3.5 py-2.5 shadow-floating sm:flex ${chip.position}`}
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-control bg-surface-orange text-primary">
+          <span className="flex h-8 w-8 items-center justify-center rounded-control bg-primary/20 text-primary">
             <chip.icon className="h-4 w-4" strokeWidth={2.5} />
           </span>
-          <p className="text-sm font-bold text-dark">{chip.label}</p>
+          <p className="text-sm font-bold text-white">{chip.label}</p>
         </motion.div>
       ))}
     </>

@@ -8,11 +8,11 @@ interface BrandMarqueeProps {
 function MarqueeItem({ integration }: { integration: Integration }) {
   const Icon = integration.icon;
   return (
-    <div className="group flex shrink-0 items-center gap-2 rounded-full border border-dark/10 bg-white px-4 py-2">
-      <span className="flex h-6 w-6 items-center justify-center rounded-control bg-dark/[0.06] text-dark/40 transition-colors group-hover:bg-surface-orange group-hover:text-primary">
+    <div className="group flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-[#0c0c0c] px-4 py-2">
+      <span className="flex h-6 w-6 items-center justify-center rounded-control bg-dark/[0.06] text-white/40 transition-colors group-hover:bg-primary/20 group-hover:text-primary">
         <Icon className="h-3.5 w-3.5" strokeWidth={2} />
       </span>
-      <span className="text-xs font-semibold text-dark/60">{integration.name}</span>
+      <span className="text-xs font-semibold text-white/60">{integration.name}</span>
     </div>
   );
 }
