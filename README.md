@@ -99,11 +99,12 @@ dashboard/
   utils/
 ```
 
-Served locally under `/app/*` (`routes/web.php`'s catch-all +
-`createBrowserRouter(..., { basename: '/app' })`) since local dev has no
-`app.rivaify.com` DNS entry. In production this becomes its own subdomain;
-switch `basename` back to `/` and drop the path-prefix route when that
-split happens.
+Served on its own host, `app.rivaify.com` (brief §11), via
+`Route::domain('app.rivaify.com')` in `routes/web.php` +
+`createBrowserRouter(..., { basename: '/' })` — no path prefix. Requires a
+DNS/hosts entry (`127.0.0.1 app.rivaify.com`) locally; visiting by bare IP
+or `localhost` falls through to the marketing site instead, since that
+route has no domain constraint.
 
 `react-router-dom` is pinned to **7.18.2** exactly (not a `^` range): every
 7.x from 7.12.0 up carries an RSC-mode CSRF advisory, and every 7.x below

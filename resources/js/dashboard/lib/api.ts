@@ -5,10 +5,10 @@
  * before the first request — see ensureCsrfCookie().
  */
 
-// Empty string = same-origin (this dev setup serves the SPA and the API
-// from the same Laravel app, see routes/web.php's /app/{any?} catch-all).
-// Set VITE_API_BASE_URL once the SPA moves to its own app.rivaify.com
-// subdomain talking to a separate api.rivaify.com origin.
+// Empty string = same-origin: app.rivaify.com serves both the SPA and its
+// API from the same Laravel app (see routes/web.php's Route::domain group).
+// Set VITE_API_BASE_URL if the API ever moves to a separate api.rivaify.com
+// origin — SANCTUM_STATEFUL_DOMAINS/CORS would need updating to match.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 
 let csrfCookiePromise: Promise<void> | null = null;
