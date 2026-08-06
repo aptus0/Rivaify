@@ -9,6 +9,8 @@ readonly class CreateProductData
     public function __construct(
         public string $title,
         public ?string $description = null,
+        public ?int $categoryId = null,
+        public ?int $brandId = null,
         public ProductType $productType = ProductType::Physical,
         public ?string $vendor = null,
         public bool $isTaxable = true,
