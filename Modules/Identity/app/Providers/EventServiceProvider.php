@@ -5,6 +5,8 @@ namespace Modules\Identity\Providers;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Modules\Identity\Events\UserRegistered;
 use Modules\Identity\Listeners\LogUserRegisteredActivity;
+use Modules\Identity\Listeners\SendEmailVerificationNotification;
+use Modules\Identity\Listeners\SendWelcomeEmail;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -16,6 +18,8 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         UserRegistered::class => [
             LogUserRegisteredActivity::class,
+            SendEmailVerificationNotification::class,
+            SendWelcomeEmail::class,
         ],
     ];
 
@@ -25,9 +29,4 @@ class EventServiceProvider extends ServiceProvider
      * @var bool
      */
     protected static $shouldDiscoverEvents = false;
-
-    /**
-     * Configure the proper event listeners for email verification.
-     */
-    protected function configureEmailVerification(): void {}
 }
