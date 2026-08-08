@@ -9,9 +9,28 @@ use Illuminate\Http\Request;
 use Modules\Verification\Actions\SubmitVerificationRequest;
 use Modules\Verification\Actions\UploadVerificationDocument;
 use Modules\Verification\Enums\DocumentType;
+use Modules\Verification\Enums\VerificationStatus;
 
 class VerificationOnboardingController extends Controller
 {
+    public function index(CurrentStore $currentStore): JsonResponse
+    {
+        $store = $currentStore->store();
+        $verificationRequest = $store->verificationRequests()->with('documents')->first();
+
+        return response()->json(['data' => [
+            'status' => $verificationRequest?->status->value ?? VerificationStatus::Draft->value,
+            'documents' => $verificationRequest
+                ? $verificationRequest->documents->map(fn ($document) => [
+                    'id' => $document->ulid,
+                    'type' => $document->type->value,
+                    'original_filename' => $document->original_filename,
+                    'status' => $document->status->value,
+                ])->values()
+                : [],
+        ]]);
+    }
+
     public function uploadDocument(Request $request, CurrentStore $currentStore, UploadVerificationDocument $action): JsonResponse
     {
         $validated = $request->validate([
@@ -22,7 +41,9 @@ class VerificationOnboardingController extends Controller
         ]);
 
         $store = $currentStore->store();
-        $verificationRequest = $store->verificationRequests()->firstOrCreate([]);
+        $verificationRequest = $store->verificationRequests()->firstOrCreate([
+            'merchant_id' => $store->merchant->id,
+        ]);
 
         $document = $action->handle(
             $verificationRequest,
@@ -34,6 +55,7 @@ class VerificationOnboardingController extends Controller
             'id' => $document->ulid,
             'type' => $document->type->value,
             'original_filename' => $document->original_filename,
+            'status' => $document->status->value,
         ]], 201);
     }
 

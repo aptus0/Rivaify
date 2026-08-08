@@ -5,6 +5,7 @@ use Modules\Verification\Http\Controllers\Admin\VerificationReviewController;
 use Modules\Verification\Http\Controllers\VerificationOnboardingController;
 
 Route::middleware(['auth:sanctum', 'store.context'])->group(function () {
+    Route::get('/store/verification-documents', [VerificationOnboardingController::class, 'index']);
     Route::post('/store/verification-documents', [VerificationOnboardingController::class, 'uploadDocument']);
     Route::post('/store/verification-request', [VerificationOnboardingController::class, 'submit']);
 });
