@@ -33,6 +33,10 @@ class EnsureStoreContext
             abort(401);
         }
 
+        if (! $request->hasSession()) {
+            return response()->json(['message' => 'store_context_session_required'], 409);
+        }
+
         $storeId = $request->session()->get('current_store_id');
         if ($storeId === null) {
             return response()->json(['message' => 'no_store_selected'], 409);

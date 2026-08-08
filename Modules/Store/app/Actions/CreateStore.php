@@ -15,7 +15,9 @@ use Modules\Store\Enums\StoreUserStatus;
 use Modules\Store\Events\StoreCreated;
 use Modules\Store\Exceptions\MerchantAlreadyHasStoreException;
 use Modules\Store\Models\Store;
+use Modules\Store\Models\StoreDomain;
 use Modules\Store\Models\StoreUser;
+use Modules\Store\Support\ReservedStoreSlugs;
 
 /**
  * Find-or-create the user's Merchant, then create their (one, for now —
@@ -58,6 +60,17 @@ class CreateStore
                 'joined_at' => now(),
             ]);
 
+            // Every store gets its {slug}.rivaify.com address up front —
+            // this is what EnsureStorefrontStoreContext resolves against.
+            // Not a "verify ownership" domain like a merchant's own custom
+            // domain, so it's pre-verified.
+            StoreDomain::withoutGlobalScope(StoreScope::class)->create([
+                'store_id' => $store->id,
+                'domain' => "{$store->slug}.rivaify.com",
+                'is_primary' => true,
+                'verified_at' => now(),
+            ]);
+
             StoreCreated::dispatch($store);
 
             return $store;
@@ -70,7 +83,7 @@ class CreateStore
         $slug = $base;
         $suffix = 2;
 
-        while (Store::query()->where('slug', $slug)->exists()) {
+        while (ReservedStoreSlugs::has($slug) || Store::query()->where('slug', $slug)->exists()) {
             $slug = "{$base}-{$suffix}";
             $suffix++;
         }

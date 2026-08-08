@@ -43,4 +43,9 @@ class InventoryItem extends Model
     {
         return $this->hasMany(InventoryMovement::class);
     }
+
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(InventoryReservation::class);
+    }
 }

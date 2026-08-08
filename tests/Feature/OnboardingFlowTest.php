@@ -42,7 +42,13 @@ class OnboardingFlowTest extends TestCase
     public function test_merchant_can_complete_onboarding_up_to_verification_submission(): void
     {
         // 1. Register
-        $response = $this->postJson('/register', [
+        // Fortify's routes are domain-scoped to config('fortify.domain') =
+        // app.rivaify.com. A relative '/register' would resolve via
+        // url('register') against APP_URL (rivaify.com, the marketing
+        // site) — Symfony\Request::create() takes the host from an
+        // absolute URL string over any HTTP_HOST server override, so the
+        // full URL has to be passed explicitly here.
+        $response = $this->postJson('https://app.rivaify.com/register', [
             'name' => 'Ayşe Yasemin',
             'email' => 'ayse@example.test',
             'password' => 'a-strong-password',

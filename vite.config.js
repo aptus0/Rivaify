@@ -7,10 +7,15 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/main.tsx', 'resources/js/dashboard/main.tsx'],
+            input: [
+                'resources/css/app.css',
+                'resources/js/main.tsx',
+                'resources/js/dashboard/main.tsx',
+                'resources/js/storefront/main.tsx',
+            ],
             refresh: true,
             fonts: [
-                bunny('Inter', {
+                bunny('Plus Jakarta Sans', {
                     weights: [400, 500, 600, 700, 800],
                 }),
             ],

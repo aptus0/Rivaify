@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['domain', 'is_primary'])]
+#[Fillable(['store_id', 'domain', 'is_primary', 'verified_at'])]
 class StoreDomain extends Model
 {
     use BelongsToStore, HasFactory, HasUlid;

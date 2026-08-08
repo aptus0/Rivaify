@@ -73,7 +73,10 @@ return [
     |
     */
 
-    'home' => '/home',
+    // The dashboard SPA has no /home route — '/' is RootRedirect, which
+    // already knows how to route a just-verified user to onboarding or the
+    // dashboard depending on their actual state.
+    'home' => '/',
 
     /*
     |--------------------------------------------------------------------------
@@ -88,7 +91,15 @@ return [
 
     'prefix' => '',
 
-    'domain' => null,
+    // Every Fortify route (login, register, password reset, email
+    // verification…) is only ever meant to run against the dashboard SPA's
+    // own host. Domain-less, these fell back to APP_URL's host
+    // (rivaify.com — the marketing site) whenever a signed URL was built
+    // outside an active HTTP request (queue workers, tinker), producing
+    // verification-email links that 404 on the wrong domain. Scoping the
+    // route here makes URL generation always resolve to the right host,
+    // request context or not.
+    'domain' => 'app.rivaify.com',
 
     /*
     |--------------------------------------------------------------------------
@@ -131,8 +142,8 @@ return [
     |
     */
 
-    // Headless: this host (api.rivaify.com) only ever returns JSON to the
-    // React SPA — no Blade views to register routes for.
+    // Headless: app.rivaify.com only ever returns JSON to the React SPA —
+    // no Blade views to register routes for.
     'views' => false,
 
     /*

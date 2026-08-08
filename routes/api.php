@@ -28,6 +28,7 @@ Route::get('/me', function (Request $request) {
                 'name' => $store->name,
                 'slug' => $store->slug,
                 'status' => $store->status->value,
+                'default_currency' => $store->default_currency,
                 'onboarding_status' => $store->onboarding_status->value,
                 'onboarding_step' => $store->onboarding_status->step(),
             ] : null,

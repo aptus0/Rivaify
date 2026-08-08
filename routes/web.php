@@ -1,5 +1,6 @@
 <?php
 
+use App\Core\Tenancy\CurrentStore;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -50,28 +51,28 @@ Route::domain('app.rivaify.com')->group(function () {
 // path "/" on any {store}.rivaify.com host too.
 Route::domain('{store}.rivaify.com')->middleware('storefront.context')->group(function () {
     Route::get('/', function () {
-        return view('storefront');
+        return view('storefront', ['store' => app(CurrentStore::class)->store()]);
     });
     Route::fallback(function () {
-        return view('storefront');
+        return view('storefront', ['store' => app(CurrentStore::class)->store()]);
     });
 });
 
 Route::domain('{store}.rivaify.test')->middleware('storefront.context')->group(function () {
     Route::get('/', function () {
-        return view('storefront');
+        return view('storefront', ['store' => app(CurrentStore::class)->store()]);
     });
     Route::fallback(function () {
-        return view('storefront');
+        return view('storefront', ['store' => app(CurrentStore::class)->store()]);
     });
 });
 
 Route::domain('{store}.rivaify.localhost')->middleware('storefront.context')->group(function () {
     Route::get('/', function () {
-        return view('storefront');
+        return view('storefront', ['store' => app(CurrentStore::class)->store()]);
     });
     Route::fallback(function () {
-        return view('storefront');
+        return view('storefront', ['store' => app(CurrentStore::class)->store()]);
     });
 });
 

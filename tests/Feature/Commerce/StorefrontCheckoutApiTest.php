@@ -16,6 +16,7 @@ use Modules\Commerce\Models\Shipping\ShippingMethod;
 use Modules\Commerce\Models\Tax\TaxRate;
 use Modules\Commerce\Services\Inventory\InventoryManager;
 use Modules\Merchant\Models\Merchant;
+use Modules\Store\Enums\StoreStatus;
 use Modules\Store\Models\Store;
 use Tests\TestCase;
 
@@ -141,6 +142,7 @@ class StorefrontCheckoutApiTest extends TestCase
         return $merchant->stores()->create([
             'name' => $name,
             'slug' => str($name)->slug(),
+            'status' => StoreStatus::Active,
         ]);
     }
 }

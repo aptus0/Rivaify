@@ -9,6 +9,7 @@ use Modules\Commerce\Enums\Catalog\ProductStatus;
 use Modules\Commerce\Models\Cart\Cart;
 use Modules\Commerce\Models\Catalog\Product;
 use Modules\Merchant\Models\Merchant;
+use Modules\Store\Enums\StoreStatus;
 use Modules\Store\Models\Store;
 use Tests\TestCase;
 
@@ -91,7 +92,7 @@ class StorefrontApiTest extends TestCase
         $this->get("http://{$store->slug}.rivaify.test/checkouts/01KZ0000000000000000000000")
             ->assertOk()
             ->assertSee('id="root"', false)
-            ->assertSee('Rivaify Store');
+            ->assertSee("{$store->name} · Rivaify");
     }
 
     private function makeStore(string $name): Store
@@ -102,6 +103,7 @@ class StorefrontApiTest extends TestCase
         return $merchant->stores()->create([
             'name' => $name,
             'slug' => str($name)->slug(),
+            'status' => StoreStatus::Active,
         ]);
     }
 

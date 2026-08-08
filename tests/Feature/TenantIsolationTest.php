@@ -90,7 +90,9 @@ class TenantIsolationTest extends TestCase
         [, $storeA] = $this->makeStoreWithUser('Store A');
         [, $storeB] = $this->makeStoreWithUser('Store B');
 
-        $all = StoreUser::withoutGlobalScope(StoreScope::class)->get();
+        $all = StoreUser::withoutGlobalScope(StoreScope::class)
+            ->whereIn('store_id', [$storeA->id, $storeB->id])
+            ->get();
 
         $this->assertCount(2, $all);
         $this->assertTrue($all->contains('store_id', $storeA->id));
