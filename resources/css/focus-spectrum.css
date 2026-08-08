@@ -24,19 +24,22 @@
     initial-value: 0deg;
 }
 
+/* Rivaify Meridian (2026-08-06): the ring used to sweep through five
+   unrelated hues (orange/magenta/purple/blue/cyan) — a "neon" read at odds
+   with the calmer, trust-first mood this redesign is after. It now sweeps
+   through exactly two: the brand orange warming into amber, then resolving
+   into the new navy ink, and back — one motif ("ember fading into night")
+   instead of a rainbow. */
 :root {
     --spectrum-orange: #ff6b00;
-    --spectrum-magenta: #ff3d81;
-    --spectrum-purple: #7957ff;
-    --spectrum-blue: #3182ff;
-    --spectrum-cyan: #20c7c7;
+    --spectrum-amber: #ffb347;
+    --spectrum-navy: #0a1128;
     --spectrum-conic: conic-gradient(
         from var(--spectrum-angle),
         var(--spectrum-orange),
-        var(--spectrum-magenta),
-        var(--spectrum-purple),
-        var(--spectrum-blue),
-        var(--spectrum-cyan),
+        var(--spectrum-amber),
+        var(--spectrum-navy),
+        var(--spectrum-amber),
         var(--spectrum-orange)
     );
 }
@@ -123,7 +126,7 @@
     background: radial-gradient(
         280px circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
         color-mix(in srgb, var(--spectrum-orange) 70%, transparent),
-        color-mix(in srgb, var(--spectrum-purple) 55%, transparent) 45%,
+        color-mix(in srgb, var(--spectrum-navy) 45%, transparent) 45%,
         transparent 72%
     );
     filter: blur(48px);
@@ -252,8 +255,8 @@
 .focus-corner-tr {
     top: -6px;
     right: -6px;
-    border-top: 2px solid var(--spectrum-purple);
-    border-right: 2px solid var(--spectrum-purple);
+    border-top: 2px solid var(--spectrum-navy);
+    border-right: 2px solid var(--spectrum-navy);
     border-top-right-radius: 6px;
     --corner-from-x: -6px;
     --corner-from-y: 6px;
@@ -262,8 +265,8 @@
 .focus-corner-bl {
     bottom: -6px;
     left: -6px;
-    border-bottom: 2px solid var(--spectrum-blue);
-    border-left: 2px solid var(--spectrum-blue);
+    border-bottom: 2px solid var(--spectrum-navy);
+    border-left: 2px solid var(--spectrum-navy);
     border-bottom-left-radius: 6px;
     --corner-from-x: 6px;
     --corner-from-y: -6px;
@@ -272,8 +275,8 @@
 .focus-corner-br {
     bottom: -6px;
     right: -6px;
-    border-bottom: 2px solid var(--spectrum-magenta);
-    border-right: 2px solid var(--spectrum-magenta);
+    border-bottom: 2px solid var(--spectrum-orange);
+    border-right: 2px solid var(--spectrum-orange);
     border-bottom-right-radius: 6px;
     --corner-from-x: -6px;
     --corner-from-y: -6px;

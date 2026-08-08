@@ -2,6 +2,7 @@
 
 namespace App\Core\Tenancy\Http\Middleware;
 
+use App\Core\Tenancy\CurrentStore;
 use Closure;
 use Illuminate\Http\Request;
 use Modules\Store\Enums\StoreUserRole;
@@ -11,6 +12,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureStorePermission
 {
+    public function __construct(private readonly CurrentStore $currentStore) {}
+
     public function handle(Request $request, Closure $next, string $permission): Response
     {
         $user = $request->user();
@@ -33,7 +36,7 @@ class EnsureStorePermission
     {
         return match ($permission) {
             'products.view' => true,
-            'products.manage' => in_array($role, [
+            'products.manage', 'inventory.manage' => in_array($role, [
                 StoreUserRole::Owner,
                 StoreUserRole::Admin,
                 StoreUserRole::Manager,

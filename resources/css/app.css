@@ -5,30 +5,35 @@
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
-    /* Marketing brand palette (Rivaify Spectrum brief, 2026-08-06) —
+    /* Marketing brand palette — "Rivaify Meridian" (2026-08-06 redesign,
+       referencing dragin.io's premium/trustworthy register). Rivaify's
+       brand orange is baked into the logo artwork itself, so it stays the
+       accent; what changes is the ink: a true navy (not near-black)
+       replaces the old --color-dark, and every neutral gets a slight cool
+       bias toward it instead of sitting at a hue-less grey.
        --color-surface is the *alternative* background for alternating
        section stripes; body itself sits on plain white. --color-dark
-       doubles as both the deep-dark section background and the near-black
-       heading/body text color on light sections (opacity does the rest,
-       e.g. text-dark/60). */
+       doubles as both the deep-navy section background and the heading/
+       body text color on light sections (opacity does the rest, e.g.
+       text-dark/60). */
     --color-primary: #ff6b00;
     --color-primary-hover: #e85f00;
     --color-primary-soft: #ff8a3d;
-    --color-dark: #090b0f;
-    --color-soft-dark: #111318;
-    --color-surface: #f8f8f8;
-    --color-surface-orange: #fff4ea;
+    --color-dark: #0a1128;
+    --color-soft-dark: #111a3b;
+    --color-surface: #f5f7fb;
+    --color-surface-orange: #fff1e4;
 
     /* Dashboard-only tokens (brief §22) — app-bg/card separate the page
        background from card surfaces, which the marketing site's single
        --color-surface doesn't need to distinguish. */
-    --color-app-bg: #f7f7f8;
+    --color-app-bg: #f6f7fb;
     --color-card: #ffffff;
-    --color-border: #e5e7eb;
-    --color-muted: #6b7280;
+    --color-border: #e2e6f0;
+    --color-muted: #5b6478;
 
     /* Radius tiers (brief: "avoid enormous 50px rounded cards everywhere") —
        Tailwind v4 maps --radius-{name} under @theme to a rounded-{name}
@@ -39,10 +44,12 @@
     --radius-window: 30px;
 
     /* Shadow tiers — same auto-mapping, shadow-{name}. xs/sm come from
-       Tailwind's own default scale already. */
-    --shadow-product: 0 20px 48px -20px rgba(9, 11, 15, 0.18);
-    --shadow-floating: 0 12px 28px -10px rgba(9, 11, 15, 0.2);
-    --shadow-spectrum: 0 24px 64px -24px rgba(121, 87, 255, 0.25);
+       Tailwind's own default scale already. shadow-spectrum is tinted with
+       the new navy ink rather than a loose purple, so elevated surfaces
+       read as "deep" rather than "colorful". */
+    --shadow-product: 0 20px 48px -20px rgba(10, 17, 40, 0.18);
+    --shadow-floating: 0 12px 28px -10px rgba(10, 17, 40, 0.2);
+    --shadow-spectrum: 0 24px 64px -24px rgba(10, 17, 40, 0.35);
 }
 
 html {

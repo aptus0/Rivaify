@@ -15,7 +15,7 @@ export function HomeHero() {
     <PointerGlow className="overflow-hidden pt-36 pb-20 lg:pt-44 lg:pb-28">
       <Spotlight className="inset-x-0 top-0 h-[560px]" />
 
-      <div className="relative mx-auto max-w-4xl px-6 text-center lg:px-8">
+      <div className="relative mx-auto max-w-4xl px-6 lg:px-8">
         <Reveal>
           <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-surface-orange px-4 py-1.5 text-sm font-medium text-primary">
             Yeni nesil ticaret altyapısı
@@ -23,7 +23,7 @@ export function HomeHero() {
         </Reveal>
 
         <Reveal delay={0.08}>
-          <h1 className="mt-8 text-5xl font-extrabold leading-[1.05] tracking-tight text-dark sm:text-6xl lg:text-[76px]">
+          <h1 className="mt-8 max-w-3xl text-5xl font-extrabold leading-[1.05] tracking-tight text-dark text-balance sm:text-6xl lg:text-[76px]">
             Mağazanı kur.
             <br />
             Her yerde sat.
@@ -33,14 +33,14 @@ export function HomeHero() {
         </Reveal>
 
         <Reveal delay={0.16}>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-dark/55">
+          <p className="mt-6 max-w-xl text-lg leading-relaxed text-dark/55">
             Rivaify, ürünlerinden siparişlerine ve sosyal satış kanallarından mağaza tasarımına kadar
             e-ticaret operasyonunu tek platformda birleştirir.
           </p>
         </Reveal>
 
         <Reveal delay={0.24}>
-          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
             <Button href={REGISTER_URL} variant="primary" size="lg" icon={ArrowRight} fullWidthOnMobile>
               {CTA.primary}
             </Button>

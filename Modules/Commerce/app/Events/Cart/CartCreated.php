@@ -1,0 +1,14 @@
+<?php
+
+namespace Modules\Commerce\Events\Cart;
+
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+use Modules\Commerce\Models\Cart\Cart;
+
+class CartCreated
+{
+    use Dispatchable, SerializesModels;
+
+    public function __construct(public readonly Cart $cart) {}
+}

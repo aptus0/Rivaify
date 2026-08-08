@@ -12,7 +12,7 @@ use Modules\Commerce\Enums\Catalog\BrandStatus;
 use Modules\Commerce\Enums\Catalog\CategoryStatus;
 use Modules\Commerce\Models\Catalog\Brand;
 use Modules\Commerce\Models\Catalog\Category;
-use Modules\Commerce\Models\Inventory\InventoryLocation;
+use Modules\Commerce\Services\Inventory\InventoryManager;
 use Modules\Merchant\Models\Merchant;
 use Modules\Store\Enums\StoreUserRole;
 use Modules\Store\Enums\StoreUserStatus;
@@ -32,45 +32,28 @@ class AdminProductApiTest extends TestCase
         $this->withoutMiddleware(ValidateCsrfToken::class);
     }
 
-    public function test_owner_can_create_search_and_update_product_variants_with_location_inventory(): void
+    public function test_owner_can_create_search_and_update_a_tenant_scoped_product_with_variants_and_inventory(): void
     {
         [$owner, $store] = $this->makeStoreWithUser('Product API Store', StoreUserRole::Owner);
         app(CurrentStore::class)->set($store);
-        $category = Category::query()->create([
-            'name' => 'Ayakkabı',
-            'slug' => 'ayakkabi-'.str()->random(6),
-            'status' => CategoryStatus::Active,
-        ]);
-        $brand = Brand::query()->create([
-            'name' => 'Nike',
-            'slug' => 'nike-'.str()->random(6),
-            'status' => BrandStatus::Active,
-        ]);
-        $storeLocation = InventoryLocation::query()->create([
-            'name' => 'Demo Mağaza',
-            'code' => 'DEMO-'.str()->random(4),
-        ]);
-        $warehouse = InventoryLocation::query()->create([
-            'name' => 'Bursa Depo',
-            'code' => 'BURSA-'.str()->random(4),
-        ]);
+        $category = Category::query()->create(['name' => 'Ayakkabı', 'slug' => 'ayakkabi-'.str()->random(6), 'status' => CategoryStatus::Active]);
+        $brand = Brand::query()->create(['name' => 'Nike', 'slug' => 'nike-'.str()->random(6), 'status' => BrandStatus::Active]);
+        $inventory = app(InventoryManager::class);
+        $storeLocation = $inventory->createLocation('Demo Mağaza', 'DEMO'.str()->random(3));
+        $warehouse = $inventory->createLocation('Bursa Depo', 'BURSA'.str()->random(3));
         app(CurrentStore::class)->clear();
         Sanctum::actingAs($owner);
 
         $created = $this->withSession(['current_store_id' => $store->id])
-            ->postJson('/api/v1/products', $this->productPayload(
-                $category->ulid,
-                $brand->ulid,
-                $storeLocation->ulid,
-                $warehouse->ulid,
-            ))
+            ->postJson('/api/v1/products', $this->productPayload($category->ulid, $brand->ulid, $storeLocation->ulid, $warehouse->ulid))
             ->assertCreated()
             ->assertJsonPath('data.title', 'Nike Air Max')
             ->assertJsonPath('data.status', 'active')
             ->assertJsonPath('data.variant_count', 6)
             ->assertJsonPath('data.inventory.sellable', 42)
             ->assertJsonPath('data.category.name', 'Ayakkabı')
-            ->assertJsonPath('data.brand.name', 'Nike');
+            ->assertJsonPath('data.brand.name', 'Nike')
+            ->assertJsonMissingPath('data.description.script');
         $productId = $created->json('data.id');
 
         $this->withSession(['current_store_id' => $store->id])
@@ -82,13 +65,7 @@ class AdminProductApiTest extends TestCase
             ->assertJsonPath('summary.active', 1);
 
         $updated = $this->withSession(['current_store_id' => $store->id])
-            ->patchJson("/api/v1/products/{$productId}", $this->productPayload(
-                $category->ulid,
-                $brand->ulid,
-                $storeLocation->ulid,
-                $warehouse->ulid,
-                '<p>Güvenli metin</p><script>alert(1)</script>',
-            ))
+            ->patchJson("/api/v1/products/{$productId}", $this->productPayload($category->ulid, $brand->ulid, $storeLocation->ulid, $warehouse->ulid, '<p>Güvenli metin</p><script>alert(1)</script>'))
             ->assertOk()
             ->assertJsonPath('data.id', $productId);
 
@@ -130,20 +107,20 @@ class AdminProductApiTest extends TestCase
         $variants = [];
         foreach (['Black', 'White'] as $color) {
             foreach (['41', '42', '43'] as $size) {
-                $isTarget = $color === 'Black' && $size === '42';
+                $title = "{$color} / {$size}";
                 $variants[] = [
-                    'title' => "{$color} / {$size}",
+                    'title' => $title,
                     'price' => '4499.00',
                     'cost_price' => '2700.00',
-                    'sku' => $isTarget ? 'NK-AM-BLK-42' : "NK-AM-{$color}-{$size}",
-                    'barcode' => $isTarget ? '8691234567890' : null,
+                    'sku' => $color === 'Black' && $size === '42' ? 'NK-AM-BLK-42' : "NK-AM-{$color}-{$size}",
+                    'barcode' => $color === 'Black' && $size === '42' ? '8691234567890' : null,
                     'weight' => '1.200',
                     'weight_unit' => 'kg',
                     'requires_shipping' => true,
                     'is_taxable' => true,
                     'status' => 'active',
                     'track_inventory' => true,
-                    'inventory' => $isTarget ? [
+                    'inventory' => $color === 'Black' && $size === '42' ? [
                         ['location_id' => $storeLocationId, 'available_quantity' => 12],
                         ['location_id' => $warehouseId, 'available_quantity' => 30],
                     ] : [],
@@ -167,8 +144,8 @@ class AdminProductApiTest extends TestCase
             'package' => ['width' => '30.00', 'height' => '12.00', 'length' => '40.00', 'dimension_unit' => 'cm'],
             'tags' => ['Spor', 'Erkek'],
             'options' => [
-                ['name' => 'Renk', 'values' => ['Black', 'White']],
-                ['name' => 'Beden', 'values' => ['41', '42', '43']],
+                ['name' => 'Color', 'values' => ['Black', 'White']],
+                ['name' => 'Size', 'values' => ['41', '42', '43']],
             ],
             'variants' => $variants,
         ];
