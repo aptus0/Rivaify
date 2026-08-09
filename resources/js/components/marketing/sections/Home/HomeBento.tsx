@@ -1,16 +1,30 @@
-import { BarChart3, Camera, CreditCard, Layers, Package, ShoppingCart, Store, Webhook } from 'lucide-react';
+import { BarChart3, Camera, CreditCard, Package, ShoppingCart, Store, Webhook } from 'lucide-react';
 import { BentoCard } from '../../../bento/BentoCard';
 import { BentoGrid } from '../../../bento/BentoGrid';
 import { BentoVisual } from '../../../bento/BentoVisual';
 import { BrandGrid } from '../../../brands/BrandGrid';
 import { Reveal } from '../../../effects/Reveal';
 
-function TileHeading({ icon: Icon, title }: { icon: typeof Store; title: string }) {
+function TileHeading({
+  icon: Icon,
+  image,
+  title,
+}: {
+  icon?: typeof Store;
+  image?: string;
+  title: string;
+}) {
   return (
     <div className="mb-4 flex items-center gap-2.5">
-      <span className="flex h-9 w-9 items-center justify-center rounded-control bg-surface-orange text-primary">
-        <Icon className="h-4 w-4" strokeWidth={2} />
-      </span>
+      {image ? (
+        <img src={image} alt="" className="h-9 w-9 rounded-control object-contain" />
+      ) : (
+        Icon && (
+          <span className="flex h-9 w-9 items-center justify-center rounded-control bg-surface-orange text-primary">
+            <Icon className="h-4 w-4" strokeWidth={2} />
+          </span>
+        )
+      )}
       <p className="text-sm font-bold text-dark">{title}</p>
     </div>
   );
@@ -19,8 +33,8 @@ function TileHeading({ icon: Icon, title }: { icon: typeof Store; title: string 
 function OnlineStoreTile() {
   return (
     <>
-      <TileHeading icon={Store} title="Online Mağaza" />
-      <BentoVisual label="yasemingiyim.com">
+      <TileHeading image="/marketing-icons/storefront.png" title="Online Mağaza" />
+      <BentoVisual label="rivaify.com">
         <div className="grid grid-cols-3 gap-1.5">
           <div className="col-span-3 h-14 rounded-control bg-surface-orange" />
           <div className="h-10 rounded-control bg-surface" />
@@ -50,7 +64,7 @@ function CheckoutTile() {
 function VisualBuilderTile() {
   return (
     <>
-      <TileHeading icon={Layers} title="Visual Builder" />
+      <TileHeading image="/marketing-icons/layers.png" title="Visual Builder" />
       <BentoVisual>
         <div className="flex flex-col gap-1.5">
           <div className="h-4 rounded bg-surface-orange" />

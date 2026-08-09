@@ -2,6 +2,7 @@
 
 namespace Modules\Commerce\Http\Presenters;
 
+use Modules\Commerce\Enums\Catalog\ProductStatus;
 use Modules\Commerce\Models\Catalog\Product;
 use Modules\Commerce\Models\Catalog\ProductMedia;
 use Modules\Commerce\Models\Catalog\ProductVariant;
@@ -26,7 +27,7 @@ class AdminProductPresenter
             'inventory' => self::inventory($product),
             'category' => self::organization($product->category),
             'brand' => self::organization($product->brand),
-            'sales_channels' => [['key' => 'online_store', 'label' => 'Online Mağaza', 'enabled' => true]],
+            'sales_channels' => [self::storefrontChannel($product)],
             'updated_at' => $product->updated_at?->toIso8601String(),
         ];
     }
@@ -132,6 +133,30 @@ class AdminProductPresenter
             'is_tracked' => $trackedVariants->isNotEmpty(),
             'sellable' => $sellable,
             'status' => $trackedVariants->isEmpty() ? 'not_tracked' : ($sellable === 0 ? 'out_of_stock' : ($sellable <= 5 ? 'low_stock' : 'in_stock')),
+        ];
+    }
+
+    /**
+     * @return array{key: string, label: string, enabled: bool, status: string, detail: string}
+     */
+    private static function storefrontChannel(Product $product): array
+    {
+        $activeVariants = $product->variants->filter(fn (ProductVariant $variant): bool => $variant->status === ProductStatus::Active)->count();
+        $published = $product->published_at === null || $product->published_at->isPast();
+        $enabled = $product->status === ProductStatus::Active && $published && $activeVariants > 0;
+        $detail = match (true) {
+            $product->status !== ProductStatus::Active => 'Ürün aktif değil',
+            ! $published => 'Yayın zamanı bekleniyor',
+            $activeVariants === 0 => 'Aktif varyant yok',
+            default => 'Yayında',
+        };
+
+        return [
+            'key' => 'online_store',
+            'label' => 'Online Mağaza',
+            'enabled' => $enabled,
+            'status' => $enabled ? 'published' : 'not_ready',
+            'detail' => $detail,
         ];
     }
 

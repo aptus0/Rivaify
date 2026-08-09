@@ -7,6 +7,7 @@ use App\Core\Tenancy\Scopes\StoreScope;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Modules\Commerce\Enums\Inventory\InventoryReservationStatus;
+use Modules\Commerce\Events\Inventory\InventoryAdjusted;
 use Modules\Commerce\Events\Inventory\InventoryReservationReleased;
 use Modules\Commerce\Events\Inventory\InventoryReserved;
 use Modules\Commerce\Exceptions\Inventory\CrossStoreInventoryException;
@@ -37,7 +38,7 @@ class InventoryManager
         ]);
     }
 
-    public function setTracking(ProductVariant $variant, bool $isTracked, bool $allowOversell = false): InventoryItem
+    public function setTracking(ProductVariant $variant, bool $isTracked, ?bool $allowOversell = null): InventoryItem
     {
         $this->assertVariantBelongsToCurrentStore($variant);
 
@@ -50,11 +51,15 @@ class InventoryManager
                 return InventoryItem::query()->create([
                     'product_variant_id' => $variant->id,
                     'is_tracked' => $isTracked,
-                    'allow_oversell' => $allowOversell,
+                    'allow_oversell' => $allowOversell ?? false,
                 ]);
             }
 
-            $item->update(['is_tracked' => $isTracked, 'allow_oversell' => $allowOversell]);
+            $attributes = ['is_tracked' => $isTracked];
+            if ($allowOversell !== null) {
+                $attributes['allow_oversell'] = $allowOversell;
+            }
+            $item->update($attributes);
 
             return $item->refresh();
         });
@@ -105,7 +110,12 @@ class InventoryManager
                 ]);
             }
 
-            return $level->refresh();
+            $level = $level->refresh();
+            if ($before !== $quantity) {
+                InventoryAdjusted::dispatch($level, $before, $quantity, $reason);
+            }
+
+            return $level;
         });
     }
 
@@ -200,6 +210,23 @@ class InventoryManager
     {
         return DB::transaction(function () use ($checkout) {
             $checkout = $this->lockCheckout($checkout);
+            $cart = $checkout->cart()->with('items')->first();
+            if ($cart === null || $cart->items->isEmpty()) {
+                throw new InsufficientInventoryException('Checkout cart has no items to commit.');
+            }
+            $variantQuantities = $cart->items
+                ->groupBy('variant_id')
+                ->map(fn (Collection $items): int => $items->sum('quantity'))
+                ->all();
+            $items = InventoryItem::query()
+                ->whereIn('product_variant_id', array_keys($variantQuantities))
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
+            if ($items->count() !== count($variantQuantities)) {
+                throw new InsufficientInventoryException('One or more checkout variants are not stocked.');
+            }
+
             $reservations = InventoryReservation::query()
                 ->where('checkout_id', $checkout->id)
                 ->where('status', InventoryReservationStatus::Active->value)
@@ -207,13 +234,35 @@ class InventoryManager
                 ->lockForUpdate()
                 ->get();
 
+            $trackedItems = $items->where('is_tracked', true);
+            if ($reservations->count() !== $trackedItems->count()) {
+                throw new InsufficientInventoryException('Active inventory reservations are incomplete.');
+            }
+            foreach ($trackedItems as $item) {
+                $reservation = $reservations->firstWhere('inventory_item_id', $item->id);
+                $expectedQuantity = $variantQuantities[$item->product_variant_id];
+                if (
+                    $reservation === null
+                    || $reservation->quantity !== $expectedQuantity
+                    || $reservation->expires_at->isPast()
+                ) {
+                    throw new InsufficientInventoryException('Active inventory reservations are incomplete.');
+                }
+            }
+
             foreach ($reservations as $reservation) {
+                $item = $items->firstWhere('id', $reservation->inventory_item_id);
                 $level = InventoryLevel::query()
                     ->where('inventory_item_id', $reservation->inventory_item_id)
                     ->where('inventory_location_id', $reservation->location_id)
                     ->lockForUpdate()
                     ->first();
-                if ($level === null || $level->available_quantity < $reservation->quantity || $level->reserved_quantity < $reservation->quantity) {
+                if (
+                    $item === null
+                    || $level === null
+                    || (! $item->allow_oversell && $level->available_quantity < $reservation->quantity)
+                    || $level->reserved_quantity < $reservation->quantity
+                ) {
                     throw new InsufficientInventoryException('Inventory reservation cannot be committed because stock changed.');
                 }
 
@@ -224,6 +273,53 @@ class InventoryManager
                 $reservation->update([
                     'status' => InventoryReservationStatus::Committed,
                     'committed_at' => now(),
+                ]);
+            }
+
+            return $reservations->map->refresh();
+        });
+    }
+
+    /**
+     * Reverses committed checkout stock exactly once when its unfulfilled
+     * order is cancelled. The original reservation retains the audit trail
+     * and is moved to the terminal restocked state for idempotency.
+     *
+     * @return Collection<int, InventoryReservation>
+     */
+    public function restockCommittedForCheckout(CheckoutSession $checkout): Collection
+    {
+        return DB::transaction(function () use ($checkout) {
+            $checkout = $this->lockCheckout($checkout);
+            $reservations = InventoryReservation::query()
+                ->where('checkout_id', $checkout->id)
+                ->where('status', InventoryReservationStatus::Committed->value)
+                ->orderBy('inventory_item_id')
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($reservations as $reservation) {
+                $level = InventoryLevel::query()
+                    ->where('inventory_item_id', $reservation->inventory_item_id)
+                    ->where('inventory_location_id', $reservation->location_id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+                $before = $level->available_quantity;
+                $level->increment('available_quantity', $reservation->quantity);
+                $reservation->inventoryItem->movements()->create([
+                    'inventory_location_id' => $reservation->location_id,
+                    'type' => 'restock',
+                    'quantity_delta' => $reservation->quantity,
+                    'quantity_before' => $before,
+                    'quantity_after' => $before + $reservation->quantity,
+                    'reason' => 'order_cancelled',
+                    'reference_type' => CheckoutSession::class,
+                    'reference_id' => $checkout->id,
+                    'created_by' => auth()->id(),
+                ]);
+                $reservation->update([
+                    'status' => InventoryReservationStatus::Restocked,
+                    'released_at' => now(),
                 ]);
             }
 
@@ -273,7 +369,7 @@ class InventoryManager
     {
         $this->assertVariantBelongsToCurrentStore($variant);
         $item = InventoryItem::query()->where('product_variant_id', $variant->id)->first();
-        if ($item === null || ! $item->is_tracked) {
+        if ($item === null || ! $item->is_tracked || $item->allow_oversell) {
             return PHP_INT_MAX;
         }
 
@@ -351,7 +447,7 @@ class InventoryManager
         if ($reservation?->status === InventoryReservationStatus::Active) {
             $level = $this->lockLevel($item, $reservation->location_id);
             $delta = $quantity - $reservation->quantity;
-            if ($delta > 0 && $level->sellableQuantity() < $delta) {
+            if ($delta > 0 && ! $item->allow_oversell && $level->sellableQuantity() < $delta) {
                 throw new InsufficientInventoryException('Insufficient sellable inventory for this variant.');
             }
 
@@ -364,12 +460,14 @@ class InventoryManager
             return $reservation->refresh();
         }
 
-        $level = InventoryLevel::query()
+        $levels = InventoryLevel::query()
             ->where('inventory_item_id', $item->id)
             ->orderBy('id')
             ->lockForUpdate()
-            ->get()
-            ->first(fn (InventoryLevel $level): bool => $level->sellableQuantity() >= $quantity);
+            ->get();
+        $level = $item->allow_oversell
+            ? $levels->first()
+            : $levels->first(fn (InventoryLevel $level): bool => $level->sellableQuantity() >= $quantity);
         if ($level === null) {
             throw new InsufficientInventoryException('Insufficient sellable inventory for this variant.');
         }

@@ -31,14 +31,23 @@ export function UserMenu({ user }: { user: CurrentUser }) {
             <p className="text-xs text-muted">{user.email}</p>
           </div>
           <div className="my-1 border-t border-border" />
-          {['Profil', 'Hesap Ayarları', 'Mağaza Ayarları'].map((label) => (
+          {[
+            { label: 'Profil', path: '/settings#account' },
+            { label: 'Hesap Ayarları', path: '/settings#security' },
+            { label: 'Mağaza Ayarları', path: '/settings#store' },
+          ].map((item) => (
             <button
-              key={label}
-              disabled
-              title="Yakında"
-              className="block w-full cursor-not-allowed px-3 py-2 text-left text-sm text-muted"
+              key={item.path}
+              onClick={() => {
+                close();
+                navigate(item.path);
+                window.requestAnimationFrame(() => {
+                  document.getElementById(item.path.split('#')[1])?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+              }}
+              className="block w-full px-3 py-2 text-left text-sm text-dark hover:bg-app-bg"
             >
-              {label}
+              {item.label}
             </button>
           ))}
           <div className="my-1 border-t border-border" />

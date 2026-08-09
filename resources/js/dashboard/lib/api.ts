@@ -24,7 +24,15 @@ function ensureCsrfCookie(): Promise<void> {
   }
   csrfCookiePromise ??= fetch(`${API_BASE_URL}/sanctum/csrf-cookie`, {
     credentials: 'include',
-  }).then(() => undefined);
+  })
+    .then((response) => {
+      if (!response.ok) throw new ApiError(response.status, undefined);
+    })
+    .finally(() => {
+      // Do not retain a resolved/rejected request forever: the cookie may
+      // expire or be cleared while the SPA remains open.
+      csrfCookiePromise = null;
+    });
   return csrfCookiePromise;
 }
 
@@ -63,6 +71,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     credentials: 'include',
     headers: {
       Accept: 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
       ...(options.body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
       ...(method !== 'GET' ? { 'X-XSRF-TOKEN': readCookie('XSRF-TOKEN') ?? '' } : {}),
     },

@@ -2,10 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, ArrowLeft, Check, CircleDollarSign, CopyPlus, Eye, Plus, Save, Tag, X } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { usePageTitle } from '../../../app/layouts/AppLayout';
+import { useAuth } from '../../../app/providers/AuthProvider';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { ApiError } from '../../../lib/api';
+import { formatMoney } from '../../../utils/commerceFormat';
 import {
   createProduct,
   createQuickBrand,
@@ -192,6 +194,7 @@ function messageFor(error: unknown): string {
 }
 
 export function ProductEditorPage() {
+  const { store } = useAuth();
   const { productId } = useParams();
   const navigate = useNavigate();
   const creating = !productId;
@@ -407,7 +410,7 @@ export function ProductEditorPage() {
     <div className="mx-auto max-w-7xl pb-28">
       <div className="mb-5 flex items-center justify-between gap-3">
         <Link to="/products" className="inline-flex items-center gap-2 text-sm font-medium text-muted hover:text-dark"><ArrowLeft size={16} />Ürünler</Link>
-        {!creating && <a href={`/products/${productId}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-muted hover:text-dark"><Eye size={16} />Mağazada gör</a>}
+        {!creating && store && draft.slug && <a href={`https://${store.slug}.rivaify.com/products/${draft.slug}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-muted hover:text-dark"><Eye size={16} />Mağazada gör</a>}
       </div>
       <div className="mb-6 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
         <div><h2 className="text-xl font-semibold text-dark">{creating ? 'Ürün Ekle' : draft.title || 'Ürünü Düzenle'}</h2><p className="mt-1 text-sm text-muted">Ürün bilgileri, varyantlar ve satışa hazır stok seviyeleri.</p></div>
@@ -429,7 +432,7 @@ export function ProductEditorPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <label className="text-sm font-medium text-dark">Kategori<select value={draft.categoryId} onChange={(event) => updateDraft({ categoryId: event.target.value })} className="mt-1.5 w-full rounded-md border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary"><option value="">Kategori seçin</option>{catalog?.categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
               <label className="text-sm font-medium text-dark">Marka<select value={draft.brandId} onChange={(event) => updateDraft({ brandId: event.target.value })} className="mt-1.5 w-full rounded-md border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary"><option value="">Marka seçin</option>{catalog?.brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select></label>
-              <div className="md:col-span-2 grid gap-2 sm:grid-cols-2"><div className="flex gap-2"><input value={quickCategoryName} onChange={(event) => setQuickCategoryName(event.target.value)} placeholder="Hızlı kategori ekle" className="min-w-0 flex-1 rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary" /><Button fullWidth={false} variant="secondary" onClick={() => void quickCreateCategory()}><Plus size={15} /></Button></div><div className="flex gap-2"><input value={quickBrandName} onChange={(event) => setQuickBrandName(event.target.value)} placeholder="Hızlı marka ekle" className="min-w-0 flex-1 rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary" /><Button fullWidth={false} variant="secondary" onClick={() => void quickCreateBrand()}><Plus size={15} /></Button></div></div>
+              <div className="md:col-span-2 grid gap-2 sm:grid-cols-2"><div className="flex gap-2"><input value={quickCategoryName} onChange={(event) => setQuickCategoryName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); void quickCreateCategory(); } }} placeholder="Hızlı kategori ekle" className="min-w-0 flex-1 rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary" /><Button type="button" fullWidth={false} variant="secondary" onClick={() => void quickCreateCategory()}><Plus size={15} /></Button></div><div className="flex gap-2"><input value={quickBrandName} onChange={(event) => setQuickBrandName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); void quickCreateBrand(); } }} placeholder="Hızlı marka ekle" className="min-w-0 flex-1 rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary" /><Button type="button" fullWidth={false} variant="secondary" onClick={() => void quickCreateBrand()}><Plus size={15} /></Button></div></div>
               <label className="text-sm font-medium text-dark">Ürün tipi<select value={draft.productType} onChange={(event) => updateDraft({ productType: event.target.value as ProductType, requiresShipping: event.target.value === 'physical' ? draft.requiresShipping : false })} className="mt-1.5 w-full rounded-md border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary"><option value="physical">Fiziksel ürün</option><option value="digital">Dijital ürün</option><option value="service">Hizmet</option></select></label>
               <label className="text-sm font-medium text-dark">Satıcı / tedarikçi<input value={draft.vendor} onChange={(event) => updateDraft({ vendor: event.target.value })} className="mt-1.5 w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary" placeholder="Opsiyonel" /></label>
               <div className="md:col-span-2"><label className="text-sm font-medium text-dark">Etiketler</label><div className="mt-1.5 flex flex-wrap gap-2 rounded-md border border-border p-2">{draft.tags.map((tag) => <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-app-bg px-2 py-1 text-xs text-dark"><Tag size={12} />{tag}<button type="button" onClick={() => updateDraft({ tags: draft.tags.filter((item) => item !== tag) })} aria-label={`${tag} etiketini kaldır`}><X size={12} /></button></span>)}<input value={tagInput} onChange={(event) => setTagInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ',') { event.preventDefault(); addTag(); } }} onBlur={addTag} placeholder="Etiket ekle" className="min-w-32 flex-1 border-0 px-1 py-1 text-sm outline-none" /></div></div>
@@ -437,7 +440,7 @@ export function ProductEditorPage() {
           </FormSection>
 
           <FormSection title="Fiyatlandırma" description="Fiyatlar sunucuda decimal olarak doğrulanır. Kâr bilgisi yalnızca yönetim ekranı görünümüdür.">
-            <div className="grid gap-4 md:grid-cols-3"><Input label="Satış fiyatı" type="number" min="0" step="0.01" value={draft.variants[0]?.price ?? ''} onChange={(event) => updateVariant(draft.variants[0]?.clientId ?? '', { price: event.target.value })} /><Input label="Karşılaştırma fiyatı" type="number" min="0" step="0.01" value={draft.variants[0]?.compare_at_price ?? ''} onChange={(event) => updateVariant(draft.variants[0]?.clientId ?? '', { compare_at_price: event.target.value || null })} /><Input label="Maliyet" type="number" min="0" step="0.01" value={draft.variants[0]?.cost_price ?? ''} onChange={(event) => updateVariant(draft.variants[0]?.clientId ?? '', { cost_price: event.target.value || null })} /></div><ProfitPreview variant={draft.variants[0]} />
+            <div className="grid gap-4 md:grid-cols-3"><Input label="Satış fiyatı" type="number" min="0" step="0.01" value={draft.variants[0]?.price ?? ''} onChange={(event) => updateVariant(draft.variants[0]?.clientId ?? '', { price: event.target.value })} /><Input label="Karşılaştırma fiyatı" type="number" min="0" step="0.01" value={draft.variants[0]?.compare_at_price ?? ''} onChange={(event) => updateVariant(draft.variants[0]?.clientId ?? '', { compare_at_price: event.target.value || null })} /><Input label="Maliyet" type="number" min="0" step="0.01" value={draft.variants[0]?.cost_price ?? ''} onChange={(event) => updateVariant(draft.variants[0]?.clientId ?? '', { cost_price: event.target.value || null })} /></div><ProfitPreview variant={draft.variants[0]} currency={store?.default_currency ?? 'TRY'} />
           </FormSection>
 
           <FormSection title="Varyantlar" description="Seçenekleri eklediğinizde olası kombinasyonlar otomatik oluşturulur.">
@@ -505,12 +508,12 @@ function VariantTable({
   );
 }
 
-function ProfitPreview({ variant }: { variant?: EditorVariant }) {
+function ProfitPreview({ variant, currency }: { variant?: EditorVariant; currency: string }) {
   if (!variant) return null;
   const price = Number(variant.price || 0);
   const cost = Number(variant.cost_price || 0);
   const profit = price - cost;
   const margin = price > 0 ? (profit / price) * 100 : 0;
 
-  return <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 rounded-md bg-app-bg p-3 text-sm"><span className="text-muted">Kâr <strong className="ml-1 text-dark">₺{profit.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span><span className="text-muted">Marj <strong className="ml-1 text-dark">%{margin.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span><span className="ml-auto text-xs text-muted"><CircleDollarSign size={14} className="mr-1 inline" />Görüntüleme hesabı</span></div>;
+  return <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 rounded-md bg-app-bg p-3 text-sm"><span className="text-muted">Kâr <strong className="ml-1 text-dark">{formatMoney(profit.toFixed(2), currency)}</strong></span><span className="text-muted">Marj <strong className="ml-1 text-dark">%{margin.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span><span className="ml-auto text-xs text-muted"><CircleDollarSign size={14} className="mr-1 inline" />Görüntüleme hesabı</span></div>;
 }

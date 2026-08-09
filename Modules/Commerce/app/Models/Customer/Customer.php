@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Commerce\Enums\Customer\CustomerStatus;
 use Modules\Commerce\Models\Cart\Cart;
 use Modules\Commerce\Models\Order\Order;
+use Modules\Commerce\Models\Payment\PaymentMethod;
 
 #[Fillable([
     'first_name', 'last_name', 'email', 'phone', 'status', 'accepts_marketing',
@@ -56,5 +57,10 @@ class Customer extends Model
     public function events(): HasMany
     {
         return $this->hasMany(CustomerEvent::class)->orderBy('created_at');
+    }
+
+    public function paymentMethods(): HasMany
+    {
+        return $this->hasMany(PaymentMethod::class);
     }
 }

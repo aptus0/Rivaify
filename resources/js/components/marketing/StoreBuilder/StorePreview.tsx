@@ -48,7 +48,7 @@ export function StorePreview({ sections, device, selectedId, accent }: StorePrev
   return (
     <div className={`overflow-hidden rounded-2xl border border-dark/[0.08] bg-surface/60 p-3 ${DEVICE_WIDTH[device]}`}>
       <div className="mb-2 flex items-center justify-between rounded-md bg-white px-2.5 py-1.5">
-        <span className="text-[10px] font-bold text-dark">yasemingiyim.com</span>
+        <span className="text-[10px] font-bold text-dark">rivaify.com</span>
         <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: accent }} />
       </div>
       <div className="flex flex-col gap-1.5">

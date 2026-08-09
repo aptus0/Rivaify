@@ -3,6 +3,7 @@ export interface StorefrontStore {
   slug: string;
   currency: string;
   locale: string;
+  announcements: Array<{ id: string; message: string; ends_at: string | null }>;
 }
 
 export interface ProductVariant {
@@ -11,6 +12,8 @@ export interface ProductVariant {
   sku: string | null;
   price: string;
   compare_at_price: string | null;
+  available: boolean;
+  available_quantity: number | null;
 }
 
 export interface StorefrontProduct {
@@ -20,8 +23,31 @@ export interface StorefrontProduct {
   description: string | null;
   is_taxable: boolean;
   requires_shipping: boolean;
+  media: Array<{ id: string; url: string; alt_text: string | null; width: number | null; height: number | null; is_featured: boolean }>;
   variants: ProductVariant[];
   options: Array<{ name: string; values: string[] }> | null;
+}
+
+export interface StorefrontRuntimeSection {
+  id: string;
+  type: string;
+  enabled: boolean;
+  locked?: boolean;
+  settings: Record<string, unknown>;
+  blocks?: Array<{ id: string; type: string; settings: Record<string, unknown> }>;
+}
+
+export interface StorefrontRuntimeDocument {
+  version: 1;
+  template: string;
+  sections: StorefrontRuntimeSection[];
+}
+
+export interface StorefrontRuntime {
+  mode: 'published' | 'preview';
+  store: StorefrontStore;
+  document: StorefrontRuntimeDocument;
+  products: StorefrontProduct[];
 }
 
 export interface CartItem {
@@ -118,4 +144,5 @@ export interface PaymentResult {
   currency: string;
   order_id: string | null;
   checkout: Checkout;
+  gateway: { provider: string; iframe_url: string | null };
 }

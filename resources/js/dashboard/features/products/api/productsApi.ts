@@ -1,4 +1,4 @@
-import { apiRequest } from '../../../lib/api';
+import { ApiError, apiRequest } from '../../../lib/api';
 import type {
   CatalogOrganization,
   ProductDetail,
@@ -11,6 +11,39 @@ interface DataResponse<T> {
   data: T;
 }
 
+export type ProductListFilters = {
+  q?: string;
+  status?: string;
+  category_id?: string;
+  brand_id?: string;
+  product_type?: string;
+  inventory_status?: string;
+  page?: string;
+};
+
+export interface ProductCsvError {
+  row: number;
+  field: string;
+  message: string;
+  handle: string | null;
+}
+
+export interface ProductCsvResult {
+  mode: 'preview' | 'commit';
+  file_name: string;
+  row_count: number;
+  product_count: number;
+  will_create: number;
+  will_update: number;
+  created: number;
+  updated: number;
+  failed: number;
+  can_import: boolean;
+  error_count: number;
+  errors_truncated: boolean;
+  errors: ProductCsvError[];
+}
+
 function queryString(values: Record<string, string | undefined>): string {
   const query = new URLSearchParams(
     Object.entries(values).filter((entry): entry is [string, string] => entry[1] !== undefined && entry[1] !== ''),
@@ -19,16 +52,50 @@ function queryString(values: Record<string, string | undefined>): string {
   return query.size === 0 ? '' : `?${query.toString()}`;
 }
 
-export function listProducts(filters: {
-  q?: string;
-  status?: string;
-  category_id?: string;
-  brand_id?: string;
-  product_type?: string;
-  inventory_status?: string;
-  page?: string;
-}): Promise<ProductsResponse> {
+export function listProducts(filters: ProductListFilters): Promise<ProductsResponse> {
   return apiRequest(`/api/v1/products${queryString(filters)}`);
+}
+
+function productCsvForm(file: File, mode: ProductCsvResult['mode']): FormData {
+  const form = new FormData();
+  form.append('file', file);
+  form.append('mode', mode);
+
+  return form;
+}
+
+export function previewProductCsv(file: File): Promise<DataResponse<ProductCsvResult>> {
+  return apiRequest('/api/v1/products/import', { method: 'POST', body: productCsvForm(file, 'preview') });
+}
+
+export function importProductCsv(file: File): Promise<DataResponse<ProductCsvResult>> {
+  return apiRequest('/api/v1/products/import', { method: 'POST', body: productCsvForm(file, 'commit') });
+}
+
+export async function exportProductsCsv(filters: Omit<ProductListFilters, 'page'>): Promise<void> {
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
+  const response = await fetch(`${apiBaseUrl}/api/v1/products/export${queryString(filters)}`, {
+    credentials: 'include',
+    headers: { Accept: 'text/csv' },
+  });
+  if (!response.ok) {
+    const contentType = response.headers.get('content-type') ?? '';
+    const payload = contentType.includes('application/json') ? await response.json() : undefined;
+    throw new ApiError(response.status, payload);
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get('content-disposition') ?? '';
+  const match = disposition.match(/filename="?([^";]+)"?/i);
+  const filename = match?.[1] ?? 'urunler.csv';
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 export function getProduct(productId: string): Promise<DataResponse<ProductDetail>> {

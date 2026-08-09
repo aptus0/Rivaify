@@ -1,10 +1,14 @@
-// TEMPORARY placeholder — unblocks the storefront build (see CheckoutPage.tsx
-// for context). Replace with the actual order confirmation view.
+import { useEffect, useState } from 'react';
+import { CheckCircle2, Mail, PackageCheck, ShoppingBag } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
+import { getCheckoutConfirmation } from '../api';
+import type { Checkout } from '../types';
+import { formatMoney } from '../utils';
+
 export function CheckoutConfirmationPage() {
-  return (
-    <div className="mx-auto max-w-xl px-4 py-16 text-center">
-      <h1 className="text-xl font-semibold">Sipariş Onayı</h1>
-      <p className="mt-2 text-sm text-neutral-500">Bu sayfa henüz yapım aşamasında.</p>
-    </div>
-  );
+  const { token='' }=useParams(); const [checkout,setCheckout]=useState<Checkout|null>(null); const [error,setError]=useState(false);
+  useEffect(()=>{void getCheckoutConfirmation(token).then(r=>setCheckout(r.data)).catch(()=>setError(true));},[token]);
+  if(error)return <main className="mx-auto max-w-xl px-5 py-20 text-center"><h1 className="text-xl font-semibold">Sipariş henüz doğrulanamadı</h1><p className="mt-2 text-sm text-muted">Ödeme sonucu işleniyor olabilir. Birkaç saniye sonra sayfayı yenileyin.</p><button onClick={()=>location.reload()} className="mt-5 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-white">Tekrar kontrol et</button></main>;
+  if(!checkout)return <main className="grid min-h-[65vh] place-items-center text-sm text-muted">Sipariş onayı hazırlanıyor...</main>;
+  return <main className="bg-gradient-to-b from-emerald-50/70 to-white px-5 py-14 sm:py-20"><div className="mx-auto max-w-2xl"><div className="text-center"><span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-emerald-100 text-emerald-700"><CheckCircle2 size={34}/></span><p className="mt-5 text-sm font-semibold uppercase tracking-widest text-emerald-700">Ödeme başarıyla alındı</p><h1 className="mt-2 text-3xl font-semibold text-dark">Teşekkürler, siparişiniz hazır!</h1><p className="mt-3 text-muted">Siparişiniz hazırlanırken tüm gelişmeleri e-posta ile paylaşacağız.</p></div><div className="mt-10 overflow-hidden rounded-2xl border border-border bg-white shadow-product"><div className="flex items-center justify-between border-b border-border p-5"><div><p className="text-xs text-muted">Sipariş numarası</p><p className="mt-1 text-lg font-bold">{checkout.order?.number}</p></div><PackageCheck size={25} className="text-primary"/></div><div className="grid gap-4 p-5 sm:grid-cols-2"><div className="rounded-xl bg-app-bg p-4"><p className="flex items-center gap-2 text-xs font-semibold text-muted"><Mail size={14}/>ONAY ADRESİ</p><p className="mt-2 text-sm font-medium">{checkout.email}</p></div><div className="rounded-xl bg-app-bg p-4"><p className="text-xs font-semibold text-muted">SİPARİŞ TOPLAMI</p><p className="mt-2 text-lg font-bold">{formatMoney(checkout.grand_total,checkout.currency)}</p></div></div><div className="border-t border-border p-5"><h2 className="mb-3 font-semibold">Sipariş özeti</h2>{checkout.cart.items.map(item=><div key={item.id} className="flex justify-between py-2 text-sm"><span className="text-muted">{item.product.title} × {item.quantity}</span><span className="font-medium">{formatMoney(item.line_total,checkout.currency)}</span></div>)}</div></div><div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row"><Link to="/" className="inline-flex items-center justify-center gap-2 rounded-md bg-dark px-5 py-3 text-sm font-semibold text-white"><ShoppingBag size={16}/>Alışverişe devam et</Link></div></div></main>;
 }

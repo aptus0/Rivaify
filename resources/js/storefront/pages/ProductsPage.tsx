@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ArrowUpRight, Package } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { listProducts } from '../api';
-import { useStorefront } from '../StorefrontApp';
+import { useStorefront } from '../context';
 import type { StorefrontProduct } from '../types';
 import { formatMoney } from '../utils';
 
@@ -42,9 +42,10 @@ export function ProductsPage() {
         <div className="grid gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => {
             const startingVariant = product.variants[0];
+            const featuredMedia = product.media.find((item) => item.is_featured) ?? product.media[0];
             return (
               <Link key={product.id} to={`/products/${product.slug}`} className="group border-b border-border pb-4">
-                <div className="grid aspect-[4/3] place-items-center bg-app-bg text-muted transition group-hover:bg-surface-orange"><Package size={40} strokeWidth={1.25} /></div>
+                <div className="grid aspect-[4/3] place-items-center overflow-hidden bg-app-bg text-muted transition group-hover:bg-surface-orange">{featuredMedia ? <img src={featuredMedia.url} alt={featuredMedia.alt_text ?? product.title} loading="lazy" className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]" /> : <Package size={40} strokeWidth={1.25} />}</div>
                 <div className="mt-4 flex items-start justify-between gap-3"><div><h2 className="font-medium text-dark">{product.title}</h2><p className="mt-1 text-sm text-muted">{startingVariant ? formatMoney(startingVariant.price, store.currency) : 'Fiyat bilgisi yakında'}</p></div><ArrowUpRight size={18} className="mt-0.5 shrink-0 text-muted transition group-hover:text-primary" /></div>
               </Link>
             );

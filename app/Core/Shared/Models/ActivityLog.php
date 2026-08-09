@@ -18,7 +18,7 @@ use Modules\Store\Models\Store;
  * from a merchant's own audit trail — write store_id explicitly instead
  * (see App\Core\Shared\Services\ActivityLogger).
  */
-#[Fillable(['event', 'properties'])]
+#[Fillable(['event', 'properties', 'subject_type', 'subject_id', 'store_id', 'user_id'])]
 class ActivityLog extends Model
 {
     use HasUlid;

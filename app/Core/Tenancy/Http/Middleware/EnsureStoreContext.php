@@ -37,9 +37,44 @@ class EnsureStoreContext
             return response()->json(['message' => 'store_context_session_required'], 409);
         }
 
+        // Bootstrapping query: CurrentStore isn't bound yet at this point,
+        // so StoreUser's own StoreScope must be deliberately bypassed here
+        // — this is the one sanctioned place that happens (see StoreScope's
+        // docblock).
         $storeId = $request->session()->get('current_store_id');
+        if ($storeId !== null) {
+            $isMember = StoreUser::withoutGlobalScope(StoreScope::class)
+                ->where('store_id', $storeId)
+                ->where('user_id', $user->id)
+                ->where('status', StoreUserStatus::Active)
+                ->exists();
+
+            if (! $isMember) {
+                $request->session()->forget('current_store_id');
+                $storeId = null;
+            }
+        }
+
         if ($storeId === null) {
-            return response()->json(['message' => 'no_store_selected'], 409);
+            // Nothing sets current_store_id on login itself — only the
+            // one-time store-creation call during onboarding does — so any
+            // fresh session (new browser, or after a logout) lands here.
+            // Fall back to the merchant's own store, same as /api/me
+            // (routes/api.php) already does, and persist the choice for the
+            // rest of this session. Safe under Sprint 1's one-store-per-
+            // merchant assumption; revisit once multi-store support lands.
+            $membership = StoreUser::withoutGlobalScope(StoreScope::class)
+                ->where('user_id', $user->id)
+                ->where('status', StoreUserStatus::Active)
+                ->orderBy('id')
+                ->first();
+
+            if ($membership === null) {
+                return response()->json(['message' => 'no_store_selected'], 409);
+            }
+
+            $storeId = $membership->store_id;
+            $request->session()->put('current_store_id', $storeId);
         }
 
         $store = Store::query()->find($storeId);
@@ -47,20 +82,6 @@ class EnsureStoreContext
             $request->session()->forget('current_store_id');
 
             return response()->json(['message' => 'store_not_found'], 404);
-        }
-
-        // Bootstrapping query: CurrentStore isn't bound yet at this point,
-        // so StoreUser's own StoreScope must be deliberately bypassed here
-        // — this is the one sanctioned place that happens (see StoreScope's
-        // docblock).
-        $isMember = StoreUser::withoutGlobalScope(StoreScope::class)
-            ->where('store_id', $store->id)
-            ->where('user_id', $user->id)
-            ->where('status', StoreUserStatus::Active)
-            ->exists();
-
-        if (! $isMember) {
-            return response()->json(['message' => 'store_access_denied'], 403);
         }
 
         $this->currentStore->set($store);

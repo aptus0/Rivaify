@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Plus } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { Dropdown } from '../ui/Dropdown';
 import type { CurrentStoreSummary } from '../../types';
 
@@ -40,14 +40,9 @@ export function StoreSwitcher({ store }: { store: CurrentStoreSummary }) {
 
           <div className="my-1 border-t border-border" />
 
-          <button
-            disabled
-            title="Çoklu mağaza yakında"
-            className="flex w-full cursor-not-allowed items-center gap-2 px-3 py-2 text-left text-sm text-muted"
-          >
-            <Plus size={14} />
-            Yeni mağaza oluştur
-          </button>
+          <p className="px-3 py-2 text-xs leading-5 text-muted">
+            Bu hesap tek mağaza çalışma alanı kullanıyor.
+          </p>
         </>
       )}
     </Dropdown>

@@ -85,7 +85,7 @@ export interface ProductSummary {
   };
   category: CatalogReference | null;
   brand: CatalogReference | null;
-  sales_channels: Array<{ key: string; label: string; enabled: boolean }>;
+  sales_channels: Array<{ key: string; label: string; enabled: boolean; status?: string; detail?: string }>;
   updated_at: string | null;
 }
 

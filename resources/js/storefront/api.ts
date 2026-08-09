@@ -5,6 +5,7 @@ import type {
   PaymentResult,
   ShippingQuote,
   StorefrontProduct,
+  StorefrontRuntime,
   StorefrontStore,
 } from './types';
 
@@ -57,6 +58,10 @@ export function getStore(): Promise<ApiResponse<StorefrontStore>> {
   return request('/store');
 }
 
+export function getRuntime(): Promise<ApiResponse<StorefrontRuntime>> {
+  return request('/runtime');
+}
+
 export function listProducts(): Promise<ApiResponse<StorefrontProduct[]>> {
   return request('/products');
 }
@@ -91,7 +96,7 @@ export function getCheckout(token: string): Promise<ApiResponse<Checkout>> {
 
 export function updateCheckoutCustomer(
   token: string,
-  input: { email: string; first_name: string; last_name: string; phone?: string; accepts_marketing?: boolean },
+  input: { email: string; first_name: string; last_name: string; phone: string; accepts_marketing?: boolean },
 ): Promise<ApiResponse<Checkout>> {
   return request(`/checkouts/${token}/customer`, { method: 'PATCH', body: input });
 }

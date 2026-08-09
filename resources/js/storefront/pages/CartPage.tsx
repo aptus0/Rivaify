@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ArrowRight, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getCart, removeCartItem, startCheckout, updateCartItem } from '../api';
+import { trackStorefrontEvent } from '../analytics';
 import type { Cart } from '../types';
 import { formatMoney } from '../utils';
 
@@ -36,6 +37,7 @@ export function CartPage() {
     setError(null);
     try {
       const response = await startCheckout();
+      trackStorefrontEvent('checkout_started', { checkout_token: response.data.token });
       navigate(`/checkouts/${response.data.token}`);
     } catch {
       setError('Checkout başlatılamadı.');

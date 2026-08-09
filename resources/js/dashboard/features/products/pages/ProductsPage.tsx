@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Archive, CheckSquare, ChevronDown, Copy, Download, Filter, Plus, Upload, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Archive, CheckCircle2, CheckSquare, ChevronDown, CircleAlert, Copy, Download, FileSpreadsheet, Filter, Plus, Upload, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { usePageTitle } from '../../../app/layouts/AppLayout';
 import { Badge } from '../../../components/ui/Badge';
@@ -11,7 +11,7 @@ import { Pagination } from '../../../components/ui/Pagination';
 import { SearchInput } from '../../../components/ui/SearchInput';
 import { TableToolbar } from '../../../components/ui/TableToolbar';
 import { ApiError } from '../../../lib/api';
-import { bulkUpdateProducts, duplicateProduct, getCatalogOrganization, listProducts } from '../api/productsApi';
+import { bulkUpdateProducts, duplicateProduct, exportProductsCsv, getCatalogOrganization, importProductCsv, listProducts, previewProductCsv, type ProductCsvResult } from '../api/productsApi';
 import type { CatalogOrganization, InventoryStatus, ProductStatus, ProductSummary, ProductSummaryCounts } from '../api/types';
 import { ProductStatusBadge } from '../components/ProductStatusBadge';
 
@@ -60,6 +60,12 @@ export function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [csvBusy, setCsvBusy] = useState<'preview' | 'commit' | 'export' | null>(null);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvResult, setCsvResult] = useState<ProductCsvResult | null>(null);
+  const [csvNotice, setCsvNotice] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedSearch(searchInput), 300);
@@ -102,7 +108,7 @@ export function ProductsPage() {
     return () => {
       active = false;
     };
-  }, [debouncedSearch, filters, page]);
+  }, [debouncedSearch, filters, page, refreshKey]);
 
   function setFilter<K extends keyof ProductFilters>(key: K, value: ProductFilters[K]) {
     setPage(1);
@@ -149,6 +155,100 @@ export function ProductsPage() {
     }
   }
 
+  async function archive(productId: string) {
+    setBulkBusy(true);
+    try {
+      await bulkUpdateProducts({ product_ids: [productId], action: 'archive' });
+      const response = await listProducts({
+        q: debouncedSearch.trim() || undefined,
+        status: filters.status || undefined,
+        category_id: filters.categoryId || undefined,
+        brand_id: filters.brandId || undefined,
+        product_type: filters.productType || undefined,
+        inventory_status: filters.inventoryStatus || undefined,
+        page: String(page),
+      });
+      setProducts(response.data);
+      setCounts(response.summary);
+      setLastPage(response.meta.last_page);
+      setTotal(response.meta.total);
+    } catch {
+      setError('Ürün arşivlenemedi. Lütfen tekrar deneyin.');
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  function currentExportFilters() {
+    return {
+      q: debouncedSearch.trim() || undefined,
+      status: filters.status || undefined,
+      category_id: filters.categoryId || undefined,
+      brand_id: filters.brandId || undefined,
+      product_type: filters.productType || undefined,
+      inventory_status: filters.inventoryStatus || undefined,
+    };
+  }
+
+  async function exportCsv() {
+    setCsvBusy('export');
+    setCsvNotice(null);
+    try {
+      await exportProductsCsv(currentExportFilters());
+      setCsvNotice({ tone: 'success', text: 'CSV dosyası mevcut filtrelerle hazırlandı.' });
+    } catch {
+      setCsvNotice({ tone: 'error', text: 'CSV dışa aktarılamadı. Lütfen tekrar deneyin.' });
+    } finally {
+      setCsvBusy(null);
+    }
+  }
+
+  async function selectCsv(file: File | null) {
+    if (!file) return;
+    setCsvNotice(null);
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      setCsvNotice({ tone: 'error', text: 'Yalnızca .csv uzantılı dosyalar kabul edilir.' });
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setCsvNotice({ tone: 'error', text: 'CSV dosyası en fazla 2 MB olabilir.' });
+      return;
+    }
+    setCsvFile(file);
+    setCsvResult(null);
+    setCsvBusy('preview');
+    try {
+      const response = await previewProductCsv(file);
+      setCsvResult(response.data);
+    } catch (requestError) {
+      const validation = requestError instanceof ApiError ? requestError.validationErrors?.file?.[0] : null;
+      setCsvFile(null);
+      setCsvNotice({ tone: 'error', text: validation ?? 'CSV önizlemesi oluşturulamadı.' });
+    } finally {
+      setCsvBusy(null);
+    }
+  }
+
+  async function commitCsv() {
+    if (!csvFile || !csvResult?.can_import) return;
+    setCsvBusy('commit');
+    try {
+      const response = await importProductCsv(csvFile);
+      setCsvResult(response.data);
+      if (response.data.failed === 0) {
+        setCsvNotice({ tone: 'success', text: `${response.data.created} ürün oluşturuldu, ${response.data.updated} ürün güncellendi.` });
+        setRefreshKey((current) => current + 1);
+      } else {
+        setCsvNotice({ tone: 'error', text: `${response.data.failed} ürün aktarılamadı; ayrıntıları kontrol edin.` });
+      }
+    } catch (requestError) {
+      const validation = requestError instanceof ApiError ? requestError.validationErrors?.file?.[0] : null;
+      setCsvNotice({ tone: 'error', text: validation ?? 'CSV içe aktarma tamamlanamadı.' });
+    } finally {
+      setCsvBusy(null);
+    }
+  }
+
   const activeFilters = [
     filters.categoryId && { key: 'categoryId' as const, label: `Kategori: ${catalog?.categories.find((category) => category.id === filters.categoryId)?.name ?? ''}` },
     filters.brandId && { key: 'brandId' as const, label: `Marka: ${catalog?.brands.find((brand) => brand.id === filters.brandId)?.name ?? ''}` },
@@ -164,11 +264,14 @@ export function ProductsPage() {
           <p className="mt-1 text-sm text-muted">Mağazanızdaki ürünleri yönetin.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button fullWidth={false} variant="secondary" disabled title="CSV içe aktarma yakında"><Upload size={16} />İçe Aktar</Button>
-          <Button fullWidth={false} variant="secondary" disabled title="CSV dışa aktarma yakında"><Download size={16} />Dışa Aktar</Button>
+          <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(event) => { void selectCsv(event.target.files?.[0] ?? null); event.currentTarget.value = ''; }} />
+          <Button fullWidth={false} variant="secondary" disabled={csvBusy !== null} onClick={() => fileInputRef.current?.click()}><Upload size={16} />{csvBusy === 'preview' ? 'Kontrol ediliyor…' : 'İçe Aktar'}</Button>
+          <Button fullWidth={false} variant="secondary" disabled={csvBusy !== null} onClick={() => void exportCsv()}><Download size={16} />{csvBusy === 'export' ? 'Hazırlanıyor…' : 'Dışa Aktar'}</Button>
           <Link to="/products/create"><Button fullWidth={false}><Plus size={16} />Ürün Ekle</Button></Link>
         </div>
       </div>
+
+      {csvNotice && <div className={`flex items-start gap-2 rounded-lg border px-4 py-3 text-sm ${csvNotice.tone === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-700'}`}>{csvNotice.tone === 'success' ? <CheckCircle2 size={17} className="mt-0.5 shrink-0" /> : <CircleAlert size={17} className="mt-0.5 shrink-0" />}<span>{csvNotice.text}</span><button onClick={() => setCsvNotice(null)} className="ml-auto rounded p-0.5" aria-label="Bildirimi kapat"><X size={15} /></button></div>}
 
       <div className="flex flex-wrap gap-2">
         {([
@@ -214,12 +317,35 @@ export function ProductsPage() {
         {selected.size > 0 && <div className="flex flex-wrap items-center gap-2 border-b border-primary/20 bg-surface-orange px-4 py-3"><span className="mr-2 text-sm font-semibold text-dark">{selected.size} ürün seçildi</span><Button fullWidth={false} variant="secondary" disabled={bulkBusy} onClick={() => void applyBulk('activate')}>Aktif Yap</Button><Button fullWidth={false} variant="secondary" disabled={bulkBusy} onClick={() => void applyBulk('draft')}>Taslak Yap</Button><Button fullWidth={false} variant="secondary" disabled={bulkBusy} onClick={() => void applyBulk('archive')}>Arşivle</Button><Button fullWidth={false} variant="secondary" disabled={bulkBusy} onClick={() => void applyBulk('delete')}>Sil</Button></div>}
 
         {error && <p className="border-b border-border px-4 py-3 text-sm text-red-600">{error}</p>}
-        {loading ? <ProductsSkeleton /> : products.length === 0 ? <ProductsEmpty searchActive={Boolean(searchInput || activeFilters.length)} /> : <ProductsTable products={products} selected={selected} onToggle={toggleSelected} onDuplicate={(id) => void duplicate(id)} onArchive={(id) => { setSelected(new Set([id])); void applyBulk('archive'); }} />}
+        {loading ? <ProductsSkeleton /> : products.length === 0 ? <ProductsEmpty searchActive={Boolean(searchInput || activeFilters.length)} /> : <ProductsTable products={products} selected={selected} onToggle={toggleSelected} onDuplicate={(id) => void duplicate(id)} onArchive={(id) => void archive(id)} />}
         <Pagination currentPage={page} lastPage={lastPage} onChange={setPage} />
       </Card>
       <p className="text-xs text-muted">{total} ürün gösteriliyor</p>
+      {csvFile && csvResult && <CsvImportDialog file={csvFile} result={csvResult} busy={csvBusy === 'commit'} onImport={() => void commitCsv()} onClose={() => { setCsvFile(null); setCsvResult(null); }} />}
     </div>
   );
+}
+
+function CsvImportDialog({ file, result, busy, onImport, onClose }: { file: File; result: ProductCsvResult; busy: boolean; onImport: () => void; onClose: () => void }) {
+  const committed = result.mode === 'commit';
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-dark/45 sm:items-center sm:p-5" role="dialog" aria-modal="true" aria-labelledby="csv-import-title">
+      <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-t-2xl bg-card shadow-2xl sm:rounded-2xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-5 py-4"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-surface-orange text-primary"><FileSpreadsheet size={20} /></span><div><h3 id="csv-import-title" className="font-semibold text-dark">{committed ? 'İçe aktarma sonucu' : 'CSV içe aktarma önizlemesi'}</h3><p className="max-w-md truncate text-xs text-muted">{file.name} · {(file.size / 1024).toLocaleString('tr-TR', { maximumFractionDigits: 1 })} KB</p></div></div><button onClick={onClose} className="rounded-md p-2 text-muted hover:bg-app-bg" aria-label="Pencereyi kapat"><X size={19} /></button></div>
+        <div className="space-y-5 p-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><CsvMetric label="CSV satırı" value={result.row_count} /><CsvMetric label="Ürün" value={result.product_count} /><CsvMetric label={committed ? 'Oluşturuldu' : 'Oluşturulacak'} value={committed ? result.created : result.will_create} /><CsvMetric label={committed ? 'Güncellendi' : 'Güncellenecek'} value={committed ? result.updated : result.will_update} /></div>
+          {!committed && result.can_import && <div className="flex gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"><CheckCircle2 size={20} className="shrink-0" /><div><p className="font-semibold">Dosya içe aktarmaya hazır.</p><p className="mt-1 leading-5">Tüm satırlar doğrulandı. Her ürün varyantları ve lokasyon stoklarıyla birlikte ayrı bir transaction içinde işlenecek.</p></div></div>}
+          {result.error_count > 0 && <div><div className="mb-2 flex items-center justify-between"><h4 className="font-semibold text-red-700">{result.error_count} doğrulama hatası</h4>{result.errors_truncated && <span className="text-xs text-muted">İlk {result.errors.length} hata gösteriliyor</span>}</div><div className="max-h-72 overflow-auto rounded-lg border border-red-200"><table className="w-full text-left text-xs"><thead className="sticky top-0 bg-red-50 text-red-800"><tr><th className="px-3 py-2">Satır</th><th className="px-3 py-2">Alan</th><th className="px-3 py-2">Açıklama</th></tr></thead><tbody className="divide-y divide-red-100">{result.errors.map((item, index) => <tr key={`${item.row}-${item.field}-${index}`}><td className="whitespace-nowrap px-3 py-2 font-semibold text-dark">{item.row}</td><td className="whitespace-nowrap px-3 py-2 text-muted">{item.field}</td><td className="px-3 py-2 text-red-700">{item.message}{item.handle ? <span className="ml-1 text-muted">({item.handle})</span> : null}</td></tr>)}</tbody></table></div></div>}
+          <div className="rounded-lg bg-app-bg p-4 text-xs leading-5 text-muted"><p className="font-semibold text-dark">Güvenli CSV akışı</p><p className="mt-1">En fazla 2 MB ve 1.000 veri satırı kabul edilir. Mevcut ürünü güncellemek için dışa aktarılan <code>product_id</code> korunmalıdır. Kimliği boş satırlar yeni ürün oluşturur; tenant dışındaki ürün, kategori, marka veya lokasyon kimlikleri reddedilir.</p></div>
+        </div>
+        <div className="sticky bottom-0 flex justify-end gap-2 border-t border-border bg-card px-5 py-4"><Button fullWidth={false} variant="secondary" onClick={onClose}>{committed ? 'Kapat' : 'Vazgeç'}</Button>{!committed && <Button fullWidth={false} disabled={!result.can_import || busy} onClick={onImport}><Upload size={16} />{busy ? 'İçe aktarılıyor…' : `${result.product_count} ürünü içe aktar`}</Button>}</div>
+      </div>
+    </div>
+  );
+}
+
+function CsvMetric({ label, value }: { label: string; value: number }) {
+  return <div className="rounded-lg border border-border bg-app-bg p-3"><p className="text-xs text-muted">{label}</p><p className="mt-1 text-xl font-semibold text-dark">{value.toLocaleString('tr-TR')}</p></div>;
 }
 
 function ProductsTable({
@@ -241,17 +367,70 @@ function ProductsTable({
     <>
       <div className="hidden lg:block">
         <DataTable>
-          <table className="min-w-[1020px] w-full text-left text-sm">
-            <thead className="border-b border-border bg-app-bg text-xs font-semibold uppercase tracking-wide text-muted"><tr><th className="w-12 px-4 py-3"><input type="checkbox" checked={allSelected} onChange={() => products.forEach((product) => { if (allSelected === selected.has(product.id)) onToggle(product.id); })} aria-label="Tüm ürünleri seç" className="h-4 w-4 accent-primary" /></th><th className="px-4 py-3">Ürün</th><th className="px-4 py-3">Durum</th><th className="px-4 py-3">Envanter</th><th className="px-4 py-3">Kategori</th><th className="px-4 py-3">Marka</th><th className="px-4 py-3">Kanallar</th><th className="px-4 py-3">Güncelleme</th><th className="px-4 py-3"><span className="sr-only">İşlemler</span></th></tr></thead>
+          <table className="min-w-[980px] w-full text-left text-sm">
+            <thead className="border-b border-border bg-app-bg text-xs font-semibold uppercase tracking-wide text-muted">
+              <tr>
+                <th className="w-12 px-4 py-3"><input type="checkbox" checked={allSelected} onChange={() => products.forEach((product) => { if (allSelected === selected.has(product.id)) onToggle(product.id); })} aria-label="Tüm ürünleri seç" className="h-4 w-4 accent-primary" /></th>
+                <th className="px-4 py-3">Ürün</th>
+                <th className="px-4 py-3">Durum</th>
+                <th className="px-4 py-3">Stok</th>
+                <th className="px-4 py-3">Organizasyon</th>
+                <th className="px-4 py-3">Kanal</th>
+                <th className="px-4 py-3">Güncelleme</th>
+                <th className="px-4 py-3"><span className="sr-only">İşlemler</span></th>
+              </tr>
+            </thead>
             <tbody className="divide-y divide-border">
-              {products.map((product) => <tr key={product.id} className="hover:bg-app-bg/60"><td className="px-4 py-4"><input type="checkbox" checked={selected.has(product.id)} onChange={() => onToggle(product.id)} aria-label={`${product.title} seç`} className="h-4 w-4 accent-primary" /></td><td className="px-4 py-4"><Link to={`/products/${product.id}`} className="flex items-center gap-3"><ProductThumbnail product={product} /><span><span className="block font-medium text-dark hover:text-primary-hover">{product.title}</span><span className="mt-0.5 block text-xs text-muted">{product.variant_count} varyant</span></span></Link></td><td className="px-4 py-4"><ProductStatusBadge status={product.status} /></td><td className="px-4 py-4"><Badge tone={inventoryTone(product.inventory.status)}>{inventoryLabel(product)}</Badge></td><td className="px-4 py-4 text-muted">{product.category?.name ?? '-'}</td><td className="px-4 py-4 text-muted">{product.brand?.name ?? '-'}</td><td className="px-4 py-4"><span className="text-xs text-dark">Online Mağaza</span></td><td className="px-4 py-4 text-muted">{formatDate(product.updated_at)}</td><td className="px-4 py-4"><details className="relative"><summary className="cursor-pointer list-none rounded p-1 text-muted hover:bg-app-bg hover:text-dark">•••</summary><div className="absolute right-0 z-10 mt-1 w-32 rounded-md border border-border bg-card py-1 shadow-lg"><Link to={`/products/${product.id}`} className="block px-3 py-2 text-sm text-dark hover:bg-app-bg">Düzenle</Link><button onClick={() => onDuplicate(product.id)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-dark hover:bg-app-bg"><Copy size={14} />Kopyala</button><button onClick={() => onArchive(product.id)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-dark hover:bg-app-bg"><Archive size={14} />Arşivle</button></div></details></td></tr>)}
+              {products.map((product) => (
+                <tr key={product.id} className="hover:bg-app-bg/60">
+                  <td className="px-4 py-4"><input type="checkbox" checked={selected.has(product.id)} onChange={() => onToggle(product.id)} aria-label={`${product.title} seç`} className="h-4 w-4 accent-primary" /></td>
+                  <td className="px-4 py-4">
+                    <Link to={`/products/${product.id}`} className="flex items-center gap-3">
+                      <ProductThumbnail product={product} />
+                      <span className="min-w-0">
+                        <span className="block max-w-[320px] truncate font-medium text-dark hover:text-primary-hover">{product.title}</span>
+                        <span className="mt-0.5 block text-xs text-muted">{product.variant_count} varyant</span>
+                      </span>
+                    </Link>
+                  </td>
+                  <td className="px-4 py-4"><ProductStatusBadge status={product.status} /></td>
+                  <td className="px-4 py-4"><Badge tone={inventoryTone(product.inventory.status)}>{inventoryLabel(product)}</Badge></td>
+                  <td className="px-4 py-4 text-muted"><p className="max-w-[170px] truncate text-dark">{product.category?.name ?? 'Kategorisiz'}</p><p className="mt-1 max-w-[170px] truncate text-xs">{product.brand?.name ?? 'Marka yok'}</p></td>
+                  <td className="px-4 py-4"><ProductChannelBadge product={product} /></td>
+                  <td className="px-4 py-4 text-muted">{formatDate(product.updated_at)}</td>
+                  <td className="px-4 py-4"><details className="relative"><summary className="cursor-pointer list-none rounded p-1 text-muted hover:bg-app-bg hover:text-dark">•••</summary><div className="absolute right-0 z-10 mt-1 w-32 rounded-md border border-border bg-card py-1 shadow-lg"><Link to={`/products/${product.id}`} className="block px-3 py-2 text-sm text-dark hover:bg-app-bg">Düzenle</Link><button onClick={() => onDuplicate(product.id)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-dark hover:bg-app-bg"><Copy size={14} />Kopyala</button><button onClick={() => onArchive(product.id)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-dark hover:bg-app-bg"><Archive size={14} />Arşivle</button></div></details></td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </DataTable>
       </div>
-      <div className="divide-y divide-border lg:hidden">{products.map((product) => <div key={product.id} className="flex gap-3 p-4"><input type="checkbox" checked={selected.has(product.id)} onChange={() => onToggle(product.id)} aria-label={`${product.title} seç`} className="mt-1 h-4 w-4 accent-primary" /><Link to={`/products/${product.id}`} className="min-w-0 flex-1"><div className="flex gap-3"><ProductThumbnail product={product} /><span className="min-w-0"><span className="block truncate font-medium text-dark">{product.title}</span><span className="mt-1 block text-xs text-muted">{product.variant_count} varyant · {inventoryLabel(product)}</span><span className="mt-2 inline-block"><ProductStatusBadge status={product.status} /></span></span></div></Link></div>)}</div>
+      <div className="divide-y divide-border lg:hidden">
+        {products.map((product) => (
+          <div key={product.id} className="flex gap-3 p-4">
+            <input type="checkbox" checked={selected.has(product.id)} onChange={() => onToggle(product.id)} aria-label={`${product.title} seç`} className="mt-1 h-4 w-4 accent-primary" />
+            <Link to={`/products/${product.id}`} className="min-w-0 flex-1">
+              <div className="flex gap-3">
+                <ProductThumbnail product={product} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium text-dark">{product.title}</span>
+                  <span className="mt-1 block text-xs text-muted">{product.variant_count} varyant · {inventoryLabel(product)}</span>
+                  <span className="mt-3 flex flex-wrap gap-2"><ProductStatusBadge status={product.status} /><ProductChannelBadge product={product} /></span>
+                </span>
+              </div>
+            </Link>
+          </div>
+        ))}
+      </div>
     </>
   );
+}
+
+function ProductChannelBadge({ product }: { product: ProductSummary }) {
+  const onlineStore = product.sales_channels.find((channel) => channel.key === 'online_store');
+  if (!onlineStore) return <Badge tone="neutral">Kanal yok</Badge>;
+
+  return <Badge tone={onlineStore.enabled ? 'success' : 'warning'}>{onlineStore.enabled ? onlineStore.label : onlineStore.detail ?? 'Hazır değil'}</Badge>;
 }
 
 function ProductThumbnail({ product }: { product: ProductSummary }) {

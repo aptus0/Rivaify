@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="tr">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noindex, nofollow">
+
+        <title>Rivaify Internal</title>
+
+        @fonts
+
+        @vite(['resources/css/app.css', 'resources/js/internal-admin/main.tsx'])
+    </head>
+    <body class="antialiased">
+        <div id="root"></div>
+    </body>
+</html>

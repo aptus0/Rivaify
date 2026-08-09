@@ -38,8 +38,8 @@ export function Footer() {
   return (
     <footer className="border-t border-dark/[0.06] bg-white px-6 pt-16 pb-10 lg:px-8">
       <Container>
-        <div className="grid grid-cols-2 gap-10 sm:grid-cols-4 lg:grid-cols-5">
-          <div className="col-span-2 sm:col-span-4 lg:col-span-1">
+        <div className="grid grid-cols-2 gap-10 sm:grid-cols-3">
+          <div className="col-span-2 sm:col-span-1">
             <Logo />
             <p className="mt-3 max-w-[220px] text-sm leading-relaxed text-dark/40">
               Yeni nesil e-ticaret platformu.
@@ -66,7 +66,7 @@ export function Footer() {
             <p className="text-xs text-dark/30">© 2026 Rivaify. Tüm hakları saklıdır.</p>
           </div>
 
-          <div className="flex items-center gap-5">
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
             {LEGAL_LINKS.map((label) => (
               <span key={label} className="inline-flex items-center gap-1.5 text-xs text-dark/35">
                 {label}

@@ -14,9 +14,12 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-  if (!user.email_verified) {
-    return <Navigate to="/verify-email" replace />;
-  }
+  // TEMPORARILY DISABLED 2026-08-08: outbound mail (Gmail SMTP) isn't
+  // sending yet, so the verify-email gate would lock everyone out. Re-enable
+  // this check once mail delivery is confirmed working.
+  // if (!user.email_verified) {
+  //   return <Navigate to="/verify-email" replace />;
+  // }
 
   return <>{children}</>;
 }

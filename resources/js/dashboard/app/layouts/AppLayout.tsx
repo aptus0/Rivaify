@@ -8,8 +8,7 @@ interface AppOutletContext {
   setTitle: (title: string) => void;
 }
 
-/** Lets a page under AppLayout set the header's page title without prop
- * drilling through the router config — call once per page. */
+
 export function usePageTitle(title: string): void {
   const { setTitle } = useOutletContext<AppOutletContext>();
   useEffect(() => setTitle(title), [title, setTitle]);

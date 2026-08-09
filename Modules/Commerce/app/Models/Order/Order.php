@@ -14,7 +14,11 @@ use Modules\Commerce\Enums\Order\OrderStatus;
 use Modules\Commerce\Enums\Order\PaymentStatus;
 use Modules\Commerce\Models\Checkout\CheckoutSession;
 use Modules\Commerce\Models\Customer\Customer;
+use Modules\Commerce\Models\Fulfillment\Fulfillment;
 use Modules\Commerce\Models\Payment\Payment;
+use Modules\Commerce\Models\Payment\Refund;
+use Modules\Commerce\Models\Returns\ReturnRequest;
+use Modules\Commerce\Models\Shipping\Shipment;
 
 #[Fillable([
     'customer_id', 'checkout_id', 'order_number', 'status', 'payment_status', 'fulfillment_status',
@@ -87,5 +91,25 @@ class Order extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function fulfillments(): HasMany
+    {
+        return $this->hasMany(Fulfillment::class);
+    }
+
+    public function shipments(): HasMany
+    {
+        return $this->hasMany(Shipment::class);
+    }
+
+    public function returns(): HasMany
+    {
+        return $this->hasMany(ReturnRequest::class);
+    }
+
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(Refund::class);
     }
 }

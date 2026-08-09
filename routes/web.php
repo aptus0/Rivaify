@@ -1,5 +1,6 @@
 <?php
 
+use App\Core\Security\Http\Controllers\InternalAuthController;
 use App\Core\Tenancy\CurrentStore;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Support\Facades\Route;
@@ -42,23 +43,33 @@ Route::domain('app.rivaify.com')->group(function () {
     });
 });
 
-// The customer-facing SPA is isolated from the merchant dashboard and is
-// resolved by host rather than an exposed store id. The middleware binds the
-// host's Store into CurrentStore before any storefront API request or view is
-// served. The `.test` route keeps the same behavior available in local tests.
-// Same explicit get('/', ...) + fallback() pairing as app.rivaify.com above,
-// for the same reason — otherwise the marketing route below wins the exact
-// path "/" on any {store}.rivaify.com host too.
-Route::domain('{store}.rivaify.com')->middleware('storefront.context')->group(function () {
+
+// Rivaify internal operations. The host can resolve publicly, but the
+// surface is still staff-only: host-only hardened session cookie, CSRF,
+// throttled login, auth:sanctum for API calls, and rivaify.admin RBAC on
+// internal APIs.
+Route::domain('ins.rivaify.com')->group(function () {
+    // Own login, not Fortify's (which is domain-locked to app.rivaify.com,
+    // see config/fortify.php) — see InternalAuthController's docblock for
+    // why this can't just reuse the merchant dashboard's session.
+    Route::post('/login', [InternalAuthController::class, 'login'])->middleware('throttle:6,1');
+    Route::post('/logout', [InternalAuthController::class, 'logout'])->middleware('auth:sanctum');
+
     Route::get('/', function () {
-        return view('storefront', ['store' => app(CurrentStore::class)->store()]);
+        return view('internal-admin');
     });
     Route::fallback(function () {
-        return view('storefront', ['store' => app(CurrentStore::class)->store()]);
+        return view('internal-admin');
     });
 });
 
-Route::domain('{store}.rivaify.test')->middleware('storefront.context')->group(function () {
+// The customer-facing SPA is isolated from the merchant dashboard and is
+// resolved by host rather than an exposed store id. The middleware binds the
+// host's Store into CurrentStore before any storefront API request or view is
+// served. Same explicit get('/', ...) + fallback() pairing as app.rivaify.com above,
+// for the same reason — otherwise the marketing route below wins the exact
+// path "/" on any {store}.rivaify.com host too.
+Route::domain('{store}.rivaify.com')->middleware('storefront.context')->group(function () {
     Route::get('/', function () {
         return view('storefront', ['store' => app(CurrentStore::class)->store()]);
     });
@@ -76,9 +87,28 @@ Route::domain('{store}.rivaify.localhost')->middleware('storefront.context')->gr
     });
 });
 
+// Verified merchant-owned domains use the same storefront shell. The host
+// constraint deliberately excludes every Rivaify-owned hostname; those are
+// handled by the explicit routes above or the marketing site below.
+Route::domain('{customDomain}')
+    ->middleware('storefront.context')
+    ->group(function () {
+        $customDomainPattern = '(?!(?:.+\\.)?rivaify\\.(?:com|test|localhost)$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9][a-z0-9-]{0,62}';
+
+        Route::get('/', function () {
+            return view('storefront', ['store' => app(CurrentStore::class)->store()]);
+        })->where('customDomain', $customDomainPattern);
+
+        Route::fallback(function () {
+            return view('storefront', ['store' => app(CurrentStore::class)->store()]);
+        })->where('customDomain', $customDomainPattern);
+    });
+
 // rivaify.com (and any other/unrecognized host, e.g. plain IP in local dev)
-// — the public marketing site. 15 pages (2026-08-06 redesign), each a real
-// Laravel route rendering an Inertia page so search engines / OG scrapers
+// — the public marketing site. Trimmed 2026-08-09 from an earlier 15-page
+// pass down to 4 deliberately-kept pages (Home/Platform/Store Builder/
+// Pricing); each a real Laravel route rendering an Inertia page so search
+// engines / OG scrapers
 // get correct per-route <title>/<meta> in the *first* HTML response — see
 // resources/views/app.blade.php for how the `seo` prop below reaches that
 // HTML without needing an Inertia SSR process. HandleInertiaRequests is
@@ -109,14 +139,6 @@ Route::middleware([HandleInertiaRequests::class])->group(function () {
         ],
     ]))->name('marketing.platform');
 
-    Route::get('/online-store', fn () => Inertia::render('Marketing/OnlineStore', [
-        'seo' => [
-            'title' => 'Rivaify Online Mağaza | Markana Ait E-Ticaret Sitesi',
-            'description' => 'Rivaify altyapısıyla markana ait, kendi alan adında bir online mağaza oluştur.',
-            'canonical' => 'https://rivaify.com/online-store',
-        ],
-    ]))->name('marketing.online-store');
-
     Route::get('/store-builder', fn () => Inertia::render('Marketing/StoreBuilder', [
         'seo' => [
             'title' => 'Rivaify Store Builder | Sürükle-Bırak Mağaza Tasarımı',
@@ -124,86 +146,6 @@ Route::middleware([HandleInertiaRequests::class])->group(function () {
             'canonical' => 'https://rivaify.com/store-builder',
         ],
     ]))->name('marketing.store-builder');
-
-    Route::get('/themes', fn () => Inertia::render('Marketing/Themes', [
-        'seo' => [
-            'title' => 'Rivaify Themes | Profesyonel E-Ticaret Temaları',
-            'description' => 'Profesyonel ve dönüşüm odaklı Rivaify temalarıyla mağazanı dakikalar içinde yayına hazırla.',
-            'canonical' => 'https://rivaify.com/themes',
-        ],
-    ]))->name('marketing.themes');
-
-    Route::get('/social-commerce', fn () => Inertia::render('Marketing/SocialCommerce', [
-        'seo' => [
-            'title' => 'Rivaify Social Commerce | Sosyal Ticaret Entegrasyonları',
-            'description' => 'Instagram, Facebook ve TikTok satış kanallarını Rivaify ile tek merkezden yönet.',
-            'canonical' => 'https://rivaify.com/social-commerce',
-        ],
-    ]))->name('marketing.social-commerce');
-
-    Route::get('/payments', fn () => Inertia::render('Marketing/Payments', [
-        'seo' => [
-            'title' => 'Rivaify Payments | E-Ticaret Ödeme Entegrasyonları',
-            'description' => 'PayTR, iyzico ve Stripe ile Rivaify ödeme altyapısını mağazana bağla.',
-            'canonical' => 'https://rivaify.com/payments',
-        ],
-    ]))->name('marketing.payments');
-
-    Route::get('/shipping', fn () => Inertia::render('Marketing/Shipping', [
-        'seo' => [
-            'title' => 'Rivaify Shipping | Kargo ve Gönderim Yönetimi',
-            'description' => 'Aras Kargo, PTT Kargo ve Yurtiçi Kargo ile siparişten kapıya tek akış.',
-            'canonical' => 'https://rivaify.com/shipping',
-        ],
-    ]))->name('marketing.shipping');
-
-    Route::get('/integrations', fn () => Inertia::render('Marketing/Integrations', [
-        'seo' => [
-            'title' => 'Rivaify Entegrasyonlar | Ticaret Ekosistemi',
-            'description' => 'Rivaify\'ı işletmenle birlikte büyüt — sosyal, ödeme, kargo ve pazaryeri entegrasyonları.',
-            'canonical' => 'https://rivaify.com/integrations',
-        ],
-    ]))->name('marketing.integrations');
-
-    Route::get('/checkout', fn () => Inertia::render('Marketing/Checkout', [
-        'seo' => [
-            'title' => 'Rivaify Checkout | Markana Özel Ödeme Deneyimi',
-            'description' => 'Satışın en kritik ekranı Rivaify ile markanın bir parçası olsun.',
-            'canonical' => 'https://rivaify.com/checkout',
-        ],
-    ]))->name('marketing.checkout');
-
-    Route::get('/analytics', fn () => Inertia::render('Marketing/Analytics', [
-        'seo' => [
-            'title' => 'Rivaify Analitik | Ticaret Verilerini Anla',
-            'description' => 'Satışlarını, müşterilerini ve büyümeni Rivaify analitik paneliyle gerçek zamanlı takip et.',
-            'canonical' => 'https://rivaify.com/analytics',
-        ],
-    ]))->name('marketing.analytics');
-
-    Route::get('/developers', fn () => Inertia::render('Marketing/Developers', [
-        'seo' => [
-            'title' => 'Rivaify Developers | API ve Webhooks',
-            'description' => 'Rivaify\'ın üzerine kendi commerce deneyimini kur — REST API, Webhooks ve OAuth Apps.',
-            'canonical' => 'https://rivaify.com/developers',
-        ],
-    ]))->name('marketing.developers');
-
-    Route::get('/solutions', fn () => Inertia::render('Marketing/Solutions', [
-        'seo' => [
-            'title' => 'Rivaify Çözümler | Sektöre Özel E-Ticaret',
-            'description' => 'Moda, kozmetik, elektronik ve dijital ürün işletmeleri için Rivaify ile özelleşmiş ticaret deneyimi.',
-            'canonical' => 'https://rivaify.com/solutions',
-        ],
-    ]))->name('marketing.solutions');
-
-    Route::get('/security', fn () => Inertia::render('Marketing/Security', [
-        'seo' => [
-            'title' => 'Rivaify Güvenlik | Ticaret Altyapısında Güven',
-            'description' => 'Tenant izolasyonu, şifreli bağlantılar ve güvenli checkout mimarisiyle Rivaify altyapısı.',
-            'canonical' => 'https://rivaify.com/security',
-        ],
-    ]))->name('marketing.security');
 
     Route::get('/pricing', fn () => Inertia::render('Marketing/Pricing', [
         'seo' => [

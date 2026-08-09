@@ -2,17 +2,26 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft, Mail, MapPin, ShoppingBag, UserRound } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { usePageTitle } from '../../../app/layouts/AppLayout';
+import { useAuth } from '../../../app/providers/AuthProvider';
 import { Card } from '../../../components/ui/Card';
 import { ApiError } from '../../../lib/api';
-import { getCustomer, type CustomerDetail } from '../../commerce/api/adminCommerceApi';
+import { getCustomer, updateCustomer, type CustomerDetail } from '../../commerce/api/adminCommerceApi';
 import { formatDate, formatMoney } from '../../../utils/commerceFormat';
 
 export function CustomerDetailPage() {
   usePageTitle('Müşteri Detayı');
+  const { store } = useAuth();
   const { customerId } = useParams();
   const [customer, setCustomer] = useState<CustomerDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  async function changeStatus(status: CustomerDetail['status']) {
+    if (!customerId) return; setSaving(true);
+    try { await updateCustomer(customerId, { status }); setCustomer((current) => current ? { ...current, status } : current); }
+    catch { setError('Müşteri durumu güncellenemedi.'); } finally { setSaving(false); }
+  }
 
   useEffect(() => {
     if (!customerId) return;
@@ -38,17 +47,17 @@ export function CustomerDetailPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-5">
-      <Link to="/dashboard/customers" className="inline-flex items-center gap-2 text-sm font-medium text-muted hover:text-dark"><ArrowLeft size={16} /> Müşteriler</Link>
+      <Link to="/customers" className="inline-flex items-center gap-2 text-sm font-medium text-muted hover:text-dark"><ArrowLeft size={16} /> Müşteriler</Link>
 
-      <div>
-        <h2 className="text-xl font-semibold text-dark">{customer.name || customer.email}</h2>
-        <p className="mt-1 text-sm text-muted">{customer.email}</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div><h2 className="text-xl font-semibold text-dark">{customer.name || customer.email}</h2><p className="mt-1 text-sm text-muted">{customer.email}</p></div>
+        <label className="text-xs font-semibold text-muted">MÜŞTERİ DURUMU<select disabled={saving} value={customer.status} onChange={e => void changeStatus(e.target.value as CustomerDetail['status'])} className="ml-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-dark"><option value="active">Aktif</option><option value="disabled">Devre dışı</option><option value="blocked">Engelli</option></select></label>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="p-4"><p className="text-sm text-muted">Toplam harcama</p><p className="mt-2 text-xl font-semibold text-dark">{formatMoney(customer.total_spent, 'TRY')}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted">Toplam harcama</p><p className="mt-2 text-xl font-semibold text-dark">{formatMoney(customer.total_spent, store?.default_currency ?? 'TRY')}</p></Card>
         <Card className="p-4"><p className="text-sm text-muted">Sipariş</p><p className="mt-2 text-xl font-semibold text-dark">{customer.total_orders}</p></Card>
-        <Card className="p-4"><p className="text-sm text-muted">Ortalama sipariş</p><p className="mt-2 text-xl font-semibold text-dark">{formatMoney(customer.average_order_value, 'TRY')}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted">Ortalama sipariş</p><p className="mt-2 text-xl font-semibold text-dark">{formatMoney(customer.average_order_value, store?.default_currency ?? 'TRY')}</p></Card>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.8fr)]">
@@ -57,7 +66,7 @@ export function CustomerDetailPage() {
           {customer.orders.length === 0 ? <p className="text-sm text-muted">Henüz sipariş yok.</p> : (
             <div className="divide-y divide-border">
               {customer.orders.map((order) => (
-                <Link key={order.id} to={`/dashboard/orders/${order.id}`} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0 hover:text-primary-hover">
+                <Link key={order.id} to={`/orders/${order.id}`} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0 hover:text-primary-hover">
                   <div><p className="font-medium text-dark">{order.number}</p><p className="text-sm text-muted">{formatDate(order.placed_at)}</p></div>
                   <p className="font-medium text-dark">{formatMoney(order.grand_total, order.currency)}</p>
                 </Link>

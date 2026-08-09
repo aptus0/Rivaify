@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Commerce\Enums\Catalog\ProductStatus;
@@ -71,5 +72,13 @@ class Product extends Model
     public function tags(): HasMany
     {
         return $this->hasMany(ProductTag::class)->orderBy('name');
+    }
+
+    public function collections(): BelongsToMany
+    {
+        return $this->belongsToMany(ProductCollection::class, 'collection_product', 'product_id', 'collection_id')
+            ->withPivot(['store_id', 'position'])
+            ->withTimestamps()
+            ->orderByPivot('position');
     }
 }

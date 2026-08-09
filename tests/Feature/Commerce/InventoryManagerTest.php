@@ -125,6 +125,71 @@ class InventoryManagerTest extends TestCase
         $this->assertGreaterThanOrEqual(0, $level->fresh()->available_quantity);
     }
 
+    public function test_commit_rejects_a_tracked_checkout_without_a_complete_active_reservation(): void
+    {
+        $store = $this->makeStore('Inventory Strict Commit Store');
+        $this->setCurrentStore($store);
+        $variant = $this->makeVariant();
+        $manager = app(InventoryManager::class);
+        $location = $manager->createLocation('Strict Commit Depot');
+        $level = $manager->setAvailable($variant, $location, 2);
+        $checkout = $this->checkoutForVariant($variant, 1);
+
+        try {
+            $manager->commitForCheckout($checkout);
+            $this->fail('A checkout without an active reservation must never commit inventory.');
+        } catch (InsufficientInventoryException) {
+            // Expected: a late callback cannot silently create an order with
+            // no corresponding stock movement.
+        }
+
+        $this->assertSame(2, $level->fresh()->available_quantity);
+        $this->assertSame(0, $level->fresh()->reserved_quantity);
+    }
+
+    public function test_expired_hold_can_be_reacquired_and_committed_after_a_late_callback(): void
+    {
+        $store = $this->makeStore('Inventory Late Callback Store');
+        $this->setCurrentStore($store);
+        $variant = $this->makeVariant();
+        $manager = app(InventoryManager::class);
+        $location = $manager->createLocation('Late Callback Depot');
+        $level = $manager->setAvailable($variant, $location, 2);
+        $checkout = $this->checkoutForVariant($variant, 1);
+        $reservation = $manager->reserveForCheckout($checkout, 1)->sole();
+        $reservation->update(['expires_at' => now()->subMinute()]);
+        $manager->releaseExpired();
+
+        $renewed = $manager->reserveForCheckout($checkout, 15)->sole();
+        $committed = $manager->commitForCheckout($checkout)->sole();
+
+        $this->assertSame($reservation->id, $renewed->id);
+        $this->assertSame(InventoryReservationStatus::Committed, $committed->status);
+        $this->assertSame(1, $level->fresh()->available_quantity);
+        $this->assertSame(0, $level->fresh()->reserved_quantity);
+    }
+
+    public function test_oversell_inventory_can_be_reserved_and_committed_below_zero(): void
+    {
+        $store = $this->makeStore('Inventory Oversell Store');
+        $this->setCurrentStore($store);
+        $variant = $this->makeVariant();
+        $variant->inventoryItem()->create([
+            'is_tracked' => true,
+            'allow_oversell' => true,
+        ]);
+        $manager = app(InventoryManager::class);
+        $location = $manager->createLocation('Oversell Depot');
+        $level = $manager->setAvailable($variant, $location, 0);
+        $checkout = $this->checkoutForVariant($variant, 2);
+
+        $manager->reserveForCheckout($checkout);
+        $manager->commitForCheckout($checkout);
+
+        $this->assertSame(-2, $level->fresh()->available_quantity);
+        $this->assertSame(0, $level->fresh()->reserved_quantity);
+    }
+
     private function makeVariant(): ProductVariant
     {
         $product = Product::query()->create([

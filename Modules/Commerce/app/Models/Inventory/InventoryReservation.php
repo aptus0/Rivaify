@@ -27,6 +27,7 @@ class InventoryReservation extends Model
     {
         return [
             'status' => InventoryReservationStatus::class,
+            'quantity' => 'integer',
             'expires_at' => 'datetime',
             'released_at' => 'datetime',
             'committed_at' => 'datetime',

@@ -27,5 +27,26 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('storefront.payment', fn (Request $request) => Limit::perMinute(10)
             ->by($request->getHost().'|'.$request->ip()));
+
+        RateLimiter::for('payment.webhook', function (Request $request): array {
+            $provider = mb_strtolower((string) $request->route('provider'));
+            $eventReference = (string) ($request->input('merchant_oid')
+                ?? $request->input('event_id')
+                ?? $request->input('id')
+                ?? 'unknown');
+
+            return [
+                // Provider callbacks must not share the customer-facing
+                // 10/minute payment limiter: a busy platform receives many
+                // legitimate callbacks from the same provider IP range.
+                Limit::perMinute(1200)
+                    ->by($request->getHost().'|'.$provider.'|'.$request->ip()),
+                Limit::perMinute(30)
+                    ->by('event|'.hash('sha256', $provider.'|'.$eventReference)),
+            ];
+        });
+
+        RateLimiter::for('storefront.events', fn (Request $request) => Limit::perMinute(30)
+            ->by($request->getHost().'|'.$request->ip()));
     }
 }

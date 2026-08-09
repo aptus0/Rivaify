@@ -4,6 +4,7 @@ namespace Modules\Verification\Actions;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Modules\Verification\Enums\DocumentStatus;
 use Modules\Verification\Enums\DocumentType;
 use Modules\Verification\Models\VerificationDocument;
 use Modules\Verification\Models\VerificationRequest;
@@ -21,6 +22,7 @@ class UploadVerificationDocument
 
         return $verificationRequest->documents()->create([
             'type' => $type,
+            'status' => DocumentStatus::Pending,
             'storage_disk' => self::DISK,
             'storage_path' => $path,
             'original_filename' => $file->getClientOriginalName(),

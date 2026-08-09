@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await fetchMe();
       setUser(response.data.user);
-      setStore(response.data.store);
+      setStore(response.data.authenticated ? response.data.store : null);
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         setUser(null);

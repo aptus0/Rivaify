@@ -8,9 +8,37 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Commerce\Http\Presenters\CustomerPresenter;
 use Modules\Commerce\Models\Customer\Customer;
+use Modules\Commerce\Services\Customer\CustomerManager;
+use Modules\Commerce\DTOs\Customer\UpsertCustomerData;
+use App\Core\Tenancy\CurrentStore;
+use Illuminate\Validation\Rule;
 
 class AdminCustomerController extends Controller
 {
+    public function store(Request $request, CustomerManager $customers): JsonResponse
+    {
+        $validated = $this->validateCustomer($request);
+        $customer = $customers->findOrCreate(new UpsertCustomerData(
+            email: $validated['email'], firstName: $validated['first_name'] ?? null,
+            lastName: $validated['last_name'] ?? null, phone: $validated['phone'] ?? null,
+            acceptsMarketing: $validated['accepts_marketing'] ?? false,
+        ));
+        return response()->json(['data' => CustomerPresenter::summary($customer)], 201);
+    }
+
+    public function update(Request $request, string $ulid, CurrentStore $currentStore): JsonResponse
+    {
+        $customer = Customer::query()->where('ulid', $ulid)->firstOrFail();
+        $validated = $request->validate([
+            'email' => ['sometimes', 'email:rfc', 'max:255', Rule::unique('customers', 'email')->ignore($customer->id)->where(fn ($query) => $query->where('store_id', $currentStore->id()))],
+            'first_name' => ['sometimes', 'nullable', 'string', 'max:255'], 'last_name' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:64'], 'accepts_marketing' => ['sometimes', 'boolean'],
+            'status' => ['sometimes', 'in:active,disabled,blocked'],
+        ]);
+        if (isset($validated['email'])) $validated['email'] = mb_strtolower(trim($validated['email']));
+        $customer->update($validated);
+        return response()->json(['data' => CustomerPresenter::summary($customer->fresh())]);
+    }
     public function index(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -50,5 +78,10 @@ class AdminCustomerController extends Controller
             ->firstOrFail();
 
         return response()->json(['data' => CustomerPresenter::detail($customer)]);
+    }
+
+    private function validateCustomer(Request $request): array
+    {
+        return $request->validate(['email' => ['required', 'email:rfc', 'max:255'], 'first_name' => ['nullable', 'string', 'max:255'], 'last_name' => ['nullable', 'string', 'max:255'], 'phone' => ['nullable', 'string', 'max:64'], 'accepts_marketing' => ['nullable', 'boolean']]);
     }
 }

@@ -8,32 +8,36 @@
     --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
         'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
-    /* Marketing brand palette — "Rivaify Meridian" (2026-08-06 redesign,
-       referencing dragin.io's premium/trustworthy register). Rivaify's
+    /* Marketing brand palette — "Rivaify Commerce Aura" (2026-08-09
+       redesign, superseding the navy-tinted "Meridian" pass). Rivaify's
        brand orange is baked into the logo artwork itself, so it stays the
-       accent; what changes is the ink: a true navy (not near-black)
-       replaces the old --color-dark, and every neutral gets a slight cool
-       bias toward it instead of sitting at a hue-less grey.
+       dominant accent; the ink returns to a true near-black instead of
+       navy, and neutrals sit hue-less rather than cool-biased — "mostly
+       white, off-white, black, charcoal, light gray, and carefully placed
+       orange," per brief.
        --color-surface is the *alternative* background for alternating
        section stripes; body itself sits on plain white. --color-dark
-       doubles as both the deep-navy section background and the heading/
-       body text color on light sections (opacity does the rest, e.g.
-       text-dark/60). */
+       doubles as both the deep section background and the heading/body
+       text color on light sections (opacity does the rest, e.g.
+       text-dark/60). --color-soft-dark is the charcoal tier for dark
+       sections that shouldn't read as pure black; --color-dark-surface is
+       one step lighter still, for cards/panels sitting on a dark section. */
     --color-primary: #ff6b00;
-    --color-primary-hover: #e85f00;
+    --color-primary-hover: #ea5f00;
     --color-primary-soft: #ff8a3d;
-    --color-dark: #0a1128;
-    --color-soft-dark: #111a3b;
-    --color-surface: #f5f7fb;
-    --color-surface-orange: #fff1e4;
+    --color-dark: #090b0f;
+    --color-soft-dark: #111318;
+    --color-dark-surface: #181b21;
+    --color-surface: #fafafa;
+    --color-surface-orange: #fff3ea;
 
     /* Dashboard-only tokens (brief §22) — app-bg/card separate the page
        background from card surfaces, which the marketing site's single
        --color-surface doesn't need to distinguish. */
-    --color-app-bg: #f6f7fb;
+    --color-app-bg: #fafafa;
     --color-card: #ffffff;
-    --color-border: #e2e6f0;
-    --color-muted: #5b6478;
+    --color-border: #e7e7e9;
+    --color-muted: #6b7280;
 
     /* Radius tiers (brief: "avoid enormous 50px rounded cards everywhere") —
        Tailwind v4 maps --radius-{name} under @theme to a rounded-{name}

@@ -1,4 +1,4 @@
-import { Package, Plug, ShoppingCart, Sparkles, Users, Warehouse, type LucideIcon } from 'lucide-react';
+import { Package, Plug, ShoppingCart, Sparkles, Users, type LucideIcon } from 'lucide-react';
 import { MarketingLayout } from '../../layouts/MarketingLayout';
 import { PageHero } from '../../components/marketing/sections/PageHero';
 import { PlatformNetwork } from '../../components/marketing/sections/Platform/PlatformNetwork';
@@ -12,11 +12,11 @@ interface PlatformProps {
   seo: { title: string; description: string };
 }
 
-const STORY_POINTS: { icon: LucideIcon; title: string; description: string }[] = [
+const STORY_POINTS: { icon?: LucideIcon; image?: string; title: string; description: string }[] = [
   { icon: Package, title: 'Katalog', description: 'Ürün, varyant, kategori ve marka yönetimi.' },
   { icon: ShoppingCart, title: 'Siparişler', description: 'Sipariş akışını uçtan uca tek ekrandan yönet.' },
   { icon: Users, title: 'Müşteriler', description: 'Müşteri profilleri, segmentler ve geçmiş.' },
-  { icon: Warehouse, title: 'Stok', description: 'Depo bazlı stok ve hareket takibi.' },
+  { image: '/marketing-icons/warehouse.png', title: 'Stok', description: 'Depo bazlı stok ve hareket takibi.' },
   { icon: Sparkles, title: 'Otomasyon', description: 'Tekrarlayan işlemleri Rivaify halletsin.' },
   { icon: Plug, title: 'Entegrasyonlar', description: 'Ödeme, kargo ve pazaryeri bağlantıları.' },
 ];
@@ -57,9 +57,15 @@ export default function Platform({ seo }: PlatformProps) {
             {STORY_POINTS.map((point, index) => (
               <Reveal key={point.title} delay={index * 0.05}>
                 <div className="rounded-card border border-dark/[0.07] bg-white p-6">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-control bg-surface-orange text-primary">
-                    <point.icon className="h-5 w-5" strokeWidth={2} />
-                  </span>
+                  {point.image ? (
+                    <img src={point.image} alt="" className="h-10 w-10 object-contain" />
+                  ) : (
+                    point.icon && (
+                      <span className="flex h-10 w-10 items-center justify-center rounded-control bg-surface-orange text-primary">
+                        <point.icon className="h-5 w-5" strokeWidth={2} />
+                      </span>
+                    )
+                  )}
                   <p className="mt-4 text-sm font-bold text-dark">{point.title}</p>
                   <p className="mt-1.5 text-xs leading-relaxed text-dark/45">{point.description}</p>
                 </div>

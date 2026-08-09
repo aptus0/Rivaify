@@ -1,28 +1,20 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Logo } from '../../Logo';
 import { Button } from '../../ui/Button';
 import { LOGIN_URL, NAV_LINKS, REGISTER_URL, CTA } from '../../../data/navigation';
-import { PlatformMenu } from '../MegaMenu/PlatformMenu';
-import { SolutionsMenu } from '../MegaMenu/SolutionsMenu';
-import { IntegrationsMenu } from '../MegaMenu/IntegrationsMenu';
 
-type MenuKey = 'platform' | 'solutions' | 'integrations' | null;
-
-const MEGA_MENUS: { key: Exclude<MenuKey, null>; label: string; width: string }[] = [
-  { key: 'platform', label: 'Platform', width: 'w-[720px]' },
-  { key: 'solutions', label: 'Çözümler', width: 'w-[560px]' },
-  { key: 'integrations', label: 'Entegrasyonlar', width: 'w-[640px]' },
-];
-
+/** Flat nav — trimmed 2026-08-09 alongside the site's reduction from 15
+ * pages to 4 (Home/Platform/Store Builder/Pricing). No mega menus: with
+ * only three real destinations besides Home there's nothing left to
+ * sub-navigate, so the old Platform/Çözümler/Entegrasyonlar dropdowns
+ * (MegaMenu/*) were removed rather than kept pointing at deleted routes. */
 export function Navigation() {
   const { url } = usePage();
   const [scrolled, setScrolled] = useState(false);
-  const [openMenu, setOpenMenu] = useState<MenuKey>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const closeTimer = useRef<number | null>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 8);
@@ -40,17 +32,7 @@ export function Navigation() {
 
   useEffect(() => {
     setMobileOpen(false);
-    setOpenMenu(null);
   }, [url]);
-
-  function openMenuNow(key: Exclude<MenuKey, null>) {
-    if (closeTimer.current) window.clearTimeout(closeTimer.current);
-    setOpenMenu(key);
-  }
-
-  function scheduleClose() {
-    closeTimer.current = window.setTimeout(() => setOpenMenu(null), 120);
-  }
 
   function isActive(href: string) {
     return href === '/' ? url === '/' : url.startsWith(href);
@@ -70,37 +52,6 @@ export function Navigation() {
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Ana navigasyon">
-          {MEGA_MENUS.map((menu) => (
-            <div key={menu.key} className="relative" onMouseEnter={() => openMenuNow(menu.key)} onMouseLeave={scheduleClose}>
-              <button
-                type="button"
-                aria-expanded={openMenu === menu.key}
-                onClick={() => setOpenMenu((current) => (current === menu.key ? null : menu.key))}
-                className="flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium text-dark/70 transition-colors hover:bg-dark/[0.04] hover:text-dark"
-              >
-                {menu.label}
-                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${openMenu === menu.key ? 'rotate-180' : ''}`} />
-              </button>
-
-              <AnimatePresence>
-                {openMenu === menu.key && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.98, y: 8 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.98, y: 8 }}
-                    transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                    role="menu"
-                    className={`absolute left-1/2 top-full mt-3 -translate-x-1/2 rounded-showcase border border-dark/[0.08] bg-white p-6 shadow-spectrum ${menu.width}`}
-                  >
-                    {menu.key === 'platform' && <PlatformMenu onNavigate={() => setOpenMenu(null)} />}
-                    {menu.key === 'solutions' && <SolutionsMenu onNavigate={() => setOpenMenu(null)} />}
-                    {menu.key === 'integrations' && <IntegrationsMenu onNavigate={() => setOpenMenu(null)} />}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
-
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
@@ -144,27 +95,6 @@ export function Navigation() {
             className="overflow-hidden border-t border-dark/[0.06] bg-white md:hidden"
           >
             <div className="flex max-h-[70vh] flex-col gap-1 overflow-y-auto px-6 py-4">
-              <p className="px-3 pt-2 text-[11px] font-bold uppercase tracking-wider text-dark/35">Platform</p>
-              <Link href="/platform" className="min-h-11 rounded-control px-3 py-2.5 text-sm font-medium text-dark/70 hover:bg-surface-orange hover:text-dark">
-                Genel Bakış
-              </Link>
-              {[
-                { href: '/themes', label: 'Temalar' },
-                { href: '/store-builder', label: 'Store Builder' },
-                { href: '/checkout', label: 'Checkout' },
-                { href: '/analytics', label: 'Analitik' },
-                { href: '/social-commerce', label: 'Sosyal Ticaret' },
-                { href: '/integrations', label: 'Entegrasyonlar' },
-              ].map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="min-h-11 rounded-control px-3 py-2.5 text-sm font-medium text-dark/70 hover:bg-surface-orange hover:text-dark"
-                >
-                  {item.label}
-                </Link>
-              ))}
-              <div className="my-2 border-t border-dark/[0.06]" />
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}

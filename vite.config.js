@@ -11,12 +11,14 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/main.tsx',
                 'resources/js/dashboard/main.tsx',
+                'resources/js/internal-admin/main.tsx',
                 'resources/js/storefront/main.tsx',
             ],
-            refresh: true,
+            refresh: false,
             fonts: [
                 bunny('Plus Jakarta Sans', {
                     weights: [400, 500, 600, 700, 800],
+                    optimizedFallbacks: false,
                 }),
             ],
         }),

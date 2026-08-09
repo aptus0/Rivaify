@@ -5,12 +5,13 @@ namespace Modules\Commerce\Http\Controllers\Storefront;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Modules\Commerce\DTOs\Customer\CustomerAddressData;
 use Modules\Commerce\DTOs\Customer\UpsertCustomerData;
 use Modules\Commerce\Enums\Customer\CustomerAddressType;
+use Modules\Commerce\Exceptions\Cart\CartItemNotPurchasableException;
 use Modules\Commerce\Exceptions\Checkout\CheckoutNotActiveException;
 use Modules\Commerce\Exceptions\Checkout\InvalidCheckoutTransitionException;
-use Modules\Commerce\Exceptions\Cart\CartItemNotPurchasableException;
 use Modules\Commerce\Exceptions\Discount\DiscountNotApplicableException;
 use Modules\Commerce\Exceptions\Inventory\InsufficientInventoryException;
 use Modules\Commerce\Exceptions\Payment\IdempotencyInProgressException;
@@ -18,7 +19,6 @@ use Modules\Commerce\Exceptions\Payment\IdempotencyKeyConflictException;
 use Modules\Commerce\Exceptions\Payment\PaymentGatewayNotConfiguredException;
 use Modules\Commerce\Exceptions\Shipping\ShippingMethodNotAvailableException;
 use Modules\Commerce\Http\Presenters\CheckoutPresenter;
-use Modules\Commerce\Models\Cart\Cart;
 use Modules\Commerce\Models\Checkout\CheckoutSession;
 use Modules\Commerce\Models\Shipping\ShippingMethod;
 use Modules\Commerce\Services\Cart\CartManager;
@@ -58,10 +58,10 @@ class StorefrontCheckoutController extends Controller
     public function updateCustomer(Request $request, string $token, CheckoutManager $checkouts): JsonResponse
     {
         $validated = $request->validate([
-            'email' => ['required', 'email:rfc', 'max:255'],
-            'first_name' => ['nullable', 'string', 'max:255'],
-            'last_name' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:64'],
+            'email' => ['required', 'email:rfc', 'max:100'],
+            'first_name' => ['required', 'string', 'max:30'],
+            'last_name' => ['required', 'string', 'max:30'],
+            'phone' => ['required', 'string', 'max:20'],
             'accepts_marketing' => ['nullable', 'boolean'],
         ]);
 
@@ -171,8 +171,17 @@ class StorefrontCheckoutController extends Controller
 
     public function pay(Request $request, string $token, CheckoutOrchestrator $orchestrator): JsonResponse
     {
+        $allowedProviders = collect(config('commerce.payments.storefront_providers', ['paytr']))
+            ->map(fn (mixed $provider): string => mb_strtolower(trim((string) $provider)))
+            ->filter(fn (string $provider): bool => $provider !== '')
+            // The synchronous manual gateway is a test helper. It requires an
+            // explicit opt-in even when listed so it cannot silently become a
+            // live storefront payment method because of environment drift.
+            ->filter(fn (string $provider): bool => $provider !== 'manual' || config('commerce.payments.allow_manual_storefront') === true)
+            ->values()
+            ->all();
         $validated = $request->validate([
-            'provider' => ['required', 'string', 'max:64'],
+            'provider' => ['required', 'string', 'max:64', Rule::in($allowedProviders)],
             'payment_method_type' => ['nullable', 'string', 'max:64'],
         ]);
         $idempotencyKey = $request->header('Idempotency-Key');
@@ -207,6 +216,10 @@ class StorefrontCheckoutController extends Controller
             'currency' => $payment->currency,
             'order_id' => $payment->order?->ulid,
             'checkout' => CheckoutPresenter::present($this->checkout($token)),
+            'gateway' => [
+                'provider' => $payment->provider,
+                'iframe_url' => $payment->metadata['iframe_url'] ?? null,
+            ],
         ]]);
     }
 

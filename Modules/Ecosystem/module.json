@@ -1,0 +1,11 @@
+{
+    "name": "Ecosystem",
+    "alias": "ecosystem",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Ecosystem\\Providers\\EcosystemServiceProvider"
+    ],
+    "files": []
+}

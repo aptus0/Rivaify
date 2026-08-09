@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Resolves the store for a storefront request from its Host header —
  * either a verified custom domain (store_domains.domain) or the
- * {slug}.rivaify.com / .rivaify.test / .rivaify.localhost wildcard —
+ * {slug}.rivaify.com / .rivaify.localhost wildcard —
  * mirroring EnsureStoreContext but keyed by hostname instead of an
  * authenticated session, since storefront visitors are anonymous.
  */
@@ -48,7 +48,7 @@ class EnsureStorefrontStoreContext
             return $domain->store;
         }
 
-        foreach (['.rivaify.com', '.rivaify.test', '.rivaify.localhost'] as $suffix) {
+        foreach (['.rivaify.com', '.rivaify.localhost'] as $suffix) {
             if (! str_ends_with($host, $suffix)) {
                 continue;
             }

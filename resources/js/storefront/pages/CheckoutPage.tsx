@@ -1,12 +1,30 @@
-// TEMPORARY placeholder — unblocks the storefront build (vite.config.js
-// already registers resources/js/storefront/main.tsx as an entry, and
-// StorefrontApp.tsx imports this page, but the real implementation wasn't
-// written yet as of 2026-08-06). Replace with the actual checkout flow.
+import { useCallback, useEffect, useState } from 'react';
+import { ArrowLeft, CheckCircle2, LockKeyhole } from 'lucide-react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { applyCheckoutDiscount, applyCheckoutTax, getCheckout, getCheckoutConfirmation, getShippingQuotes, payCheckout, selectCheckoutShipping, StorefrontApiError, updateCheckoutAddress, updateCheckoutCustomer } from '../api';
+import { CheckoutAddressForm } from '../components/CheckoutAddressForm';
+import { CheckoutContactForm } from '../components/CheckoutContactForm';
+import { CheckoutOrderSummary } from '../components/CheckoutOrderSummary';
+import { CheckoutPayment } from '../components/CheckoutPayment';
+import { CheckoutShippingMethods } from '../components/CheckoutShippingMethods';
+import { CheckoutSteps } from '../components/CheckoutSteps';
+import type { AddressInput, Checkout, ShippingQuote } from '../types';
+
 export function CheckoutPage() {
-  return (
-    <div className="mx-auto max-w-xl px-4 py-16 text-center">
-      <h1 className="text-xl font-semibold">Ödeme</h1>
-      <p className="mt-2 text-sm text-neutral-500">Bu sayfa henüz yapım aşamasında.</p>
-    </div>
-  );
+  const { token = '' } = useParams(); const navigate = useNavigate(); const [search] = useSearchParams();
+  const [checkout,setCheckout]=useState<Checkout|null>(null); const [quotes,setQuotes]=useState<ShippingQuote[]>([]); const [busy,setBusy]=useState(false); const [discounting,setDiscounting]=useState(false); const [iframeUrl,setIframeUrl]=useState<string|null>(null); const [error,setError]=useState<string|null>(null);
+  const load=useCallback(()=>getCheckout(token).then(r=>{setCheckout(r.data); if(r.data.status==='completed') navigate(`/checkouts/${token}/confirmation`,{replace:true});}),[token,navigate]);
+  useEffect(()=>{void load().catch(()=>setError('Ödeme bilgileri yüklenemedi.'));},[load]);
+  useEffect(()=>{if(checkout?.status==='address'&&quotes.length===0)void getShippingQuotes(token).then(r=>setQuotes(r.data)).catch(()=>setError('Bu adres için kargo seçenekleri alınamadı.'));},[checkout?.status,quotes.length,token]);
+  useEffect(()=>{if(!iframeUrl)return; const timer=window.setInterval(()=>{void getCheckoutConfirmation(token).then(()=>navigate(`/checkouts/${token}/confirmation`,{replace:true})).catch(()=>undefined);},2500); return()=>window.clearInterval(timer);},[iframeUrl,token,navigate]);
+  useEffect(()=>{if(search.get('payment')==='failed')setError('Ödeme tamamlanamadı. Kart bilgilerinizi kontrol edip tekrar deneyin.');},[search]);
+  const run=async(action:()=>Promise<{data:Checkout}>)=>{setBusy(true);setError(null);try{const r=await action();setCheckout(r.data);return r.data;}catch(e){setError(e instanceof StorefrontApiError&&e.messageFromApi?e.messageFromApi:'İşlem tamamlanamadı. Lütfen tekrar deneyin.');}finally{setBusy(false);}};
+  if(!checkout)return <main className="grid min-h-[70vh] place-items-center"><div className="text-center"><div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary"/><p className="mt-3 text-sm text-muted">Güvenli ödeme hazırlanıyor...</p></div></main>;
+  const contact=checkout.status==='initiated'; const address=checkout.status==='customer_information'; const shipping=checkout.status==='address'; const payment=!contact&&!address&&!shipping;
+  async function saveContact(input:Parameters<typeof updateCheckoutCustomer>[1]){await run(()=>updateCheckoutCustomer(token,input));}
+  async function saveAddress(ship:AddressInput,same:boolean,bill?:AddressInput){const next=await run(()=>updateCheckoutAddress(token,ship,same,bill));if(next){try{const r=await getShippingQuotes(token);setQuotes(r.data);}catch{setError('Bu adres için kargo seçenekleri alınamadı.');}}}
+  async function selectShipping(id:string){const next=await run(()=>selectCheckoutShipping(token,id));if(next)await run(()=>applyCheckoutTax(token));}
+  async function pay(){setBusy(true);setError(null);try{const r=await payCheckout(token,'paytr','card',crypto.randomUUID());if(!r.data.gateway.iframe_url)throw new Error('iframe_missing');setCheckout(r.data.checkout);setIframeUrl(r.data.gateway.iframe_url);}catch(e){setError(e instanceof StorefrontApiError&&e.messageFromApi?e.messageFromApi:'Ödeme sistemi şu anda hazırlanamadı. Lütfen tekrar deneyin.');}finally{setBusy(false);}}
+  async function discount(code:string){setDiscounting(true);setError(null);try{const r=await applyCheckoutDiscount(token,code);setCheckout(r.data);}catch{setError('İndirim kodu uygulanamadı.');}finally{setDiscounting(false);}}
+  return <main className="bg-white"><div className="grid min-h-screen lg:grid-cols-[minmax(0,1.15fr)_minmax(380px,.85fr)]"><div className="px-5 py-6 sm:px-10 lg:px-16 lg:py-10"><div className="mx-auto max-w-2xl"><div className="mb-8 flex items-center justify-between"><Link to="/cart" className="flex items-center gap-2 text-sm font-medium text-muted hover:text-dark"><ArrowLeft size={16}/>Sepete dön</Link><span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700"><LockKeyhole size={14}/>Güvenli ödeme</span></div><CheckoutSteps status={checkout.status}/>{error&&<div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}<div className="mt-8 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7">{contact&&<CheckoutContactForm initial={{email:checkout.email??'',first_name:checkout.customer?.first_name??'',last_name:checkout.customer?.last_name??'',phone:checkout.phone??''}} submitting={busy} onSubmit={saveContact}/>} {address&&<CheckoutAddressForm initial={checkout.shipping_address} submitting={busy} onSubmit={saveAddress}/>} {shipping&&<CheckoutShippingMethods quotes={quotes} selectedId={checkout.shipping_method?.id??null} submitting={busy} onSelect={selectShipping}/>} {payment&&<CheckoutPayment submitting={busy} iframeUrl={iframeUrl} onPay={pay}/>}</div><div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted"><CheckCircle2 size={14} className="text-emerald-600"/>Ödeme sonucu güvenli sunucu bildirimiyle doğrulanır.</div></div></div><CheckoutOrderSummary checkout={checkout} applyingDiscount={discounting} onApplyDiscount={discount}/></div></main>;
 }

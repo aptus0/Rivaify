@@ -7,8 +7,11 @@ use App\Core\Tenancy\Concerns\BelongsToStore;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Commerce\Models\Catalog\Product;
 use Modules\Commerce\Models\Catalog\ProductVariant;
+use Modules\Commerce\Models\Fulfillment\FulfillmentItem;
+use Modules\Commerce\Models\Returns\ReturnItem;
 
 #[Fillable([
     'order_id', 'product_id', 'variant_id', 'product_title', 'variant_title', 'sku', 'quantity',
@@ -44,5 +47,15 @@ class OrderItem extends Model
     public function variant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class, 'variant_id');
+    }
+
+    public function fulfillmentItems(): HasMany
+    {
+        return $this->hasMany(FulfillmentItem::class);
+    }
+
+    public function returnItems(): HasMany
+    {
+        return $this->hasMany(ReturnItem::class);
     }
 }

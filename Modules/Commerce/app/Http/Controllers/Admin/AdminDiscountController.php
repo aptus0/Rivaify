@@ -14,13 +14,41 @@ use Modules\Commerce\Models\Discount\Discount;
 
 class AdminDiscountController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request, CurrentStore $currentStore): JsonResponse
     {
-        $validated = $request->validate(['per_page' => ['nullable', 'integer', 'min:1', 'max:100']]);
-        $discounts = Discount::query()->with('conditions')->orderByDesc('created_at')->paginate($validated['per_page'] ?? 25);
+        $validated = $request->validate([
+            'q' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'string', 'in:'.implode(',', array_map(fn (DiscountStatus $status) => $status->value, DiscountStatus::cases()))],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        $summary = [
+            'all' => Discount::query()->count(),
+            'active' => Discount::query()->where('status', DiscountStatus::Active->value)->count(),
+            'inactive' => Discount::query()->where('status', DiscountStatus::Inactive->value)->count(),
+            'total_usage' => (int) Discount::query()->sum('usage_count'),
+        ];
+
+        $discounts = Discount::query()
+            ->with('conditions')
+            ->when(isset($validated['q']), function ($query) use ($validated): void {
+                $search = trim($validated['q']);
+                if ($search !== '') {
+                    $query->where(function ($query) use ($search): void {
+                        $query->where('name', 'ilike', "%{$search}%")
+                            ->orWhere('code', 'ilike', "%{$search}%");
+                    });
+                }
+            })
+            ->when(isset($validated['status']), fn ($query) => $query->where('status', $validated['status']))
+            ->orderByDesc('created_at')
+            ->paginate($validated['per_page'] ?? 25);
 
         return response()->json([
             'data' => $discounts->getCollection()->map(fn (Discount $discount): array => $this->present($discount))->values(),
+            'currency' => $currentStore->store()->default_currency,
+            'summary' => $summary,
             'meta' => [
                 'current_page' => $discounts->currentPage(),
                 'last_page' => $discounts->lastPage(),
@@ -30,10 +58,17 @@ class AdminDiscountController extends Controller
         ]);
     }
 
-    public function store(Request $request, CurrentStore $currentStore): JsonResponse
+    public function show(string $ulid): JsonResponse
+    {
+        $discount = Discount::query()->with('conditions')->where('ulid', $ulid)->firstOrFail();
+
+        return response()->json(['data' => $this->present($discount)]);
+    }
+
+    public function store(Request $request): JsonResponse
     {
         $validated = $this->validatePayload($request);
-        $discount = DB::transaction(function () use ($validated, $currentStore) {
+        $discount = DB::transaction(function () use ($validated) {
             $code = isset($validated['code']) ? mb_strtoupper(trim($validated['code'])) : null;
             if ($code !== null && Discount::query()->where('code', $code)->exists()) {
                 abort(422, 'discount_code_already_exists');
@@ -61,7 +96,7 @@ class AdminDiscountController extends Controller
     public function update(Request $request, string $ulid): JsonResponse
     {
         $discount = Discount::query()->where('ulid', $ulid)->firstOrFail();
-        $validated = $this->validatePayload($request, false);
+        $validated = $this->validatePayload($request, false, $discount->type);
 
         $discount = DB::transaction(function () use ($discount, $validated) {
             $attributes = [];
@@ -89,18 +124,40 @@ class AdminDiscountController extends Controller
         return response()->json(['data' => $this->present($discount)]);
     }
 
+    public function destroy(string $ulid): JsonResponse
+    {
+        $discount = Discount::query()->where('ulid', $ulid)->firstOrFail();
+        $isAttachedToCheckout = DB::table('carts')->where('discount_id', $discount->id)->exists()
+            || DB::table('checkout_sessions')->where('discount_id', $discount->id)->exists();
+        if ($discount->usage_count > 0 || $discount->usages()->exists() || $isAttachedToCheckout) {
+            return response()->json(['message' => 'discount_has_usage'], 409);
+        }
+        $discount->delete();
+
+        return response()->json(['data' => ['deleted' => true]]);
+    }
+
     /**
      * @return array<string, mixed>
      */
-    private function validatePayload(Request $request, bool $creating = true): array
+    private function validatePayload(Request $request, bool $creating = true, ?DiscountType $currentType = null): array
     {
         $required = $creating ? 'required' : 'sometimes';
+        $valuePresence = $creating ? 'required' : 'required_with:type';
 
         return $request->validate([
             'name' => [$required, 'string', 'max:255'],
-            'code' => ['nullable', 'string', 'max:128'],
+            'code' => ['nullable', 'string', 'max:128', 'regex:/^[A-Za-z0-9_-]+$/'],
             'type' => [$required, 'string', 'in:'.implode(',', array_map(fn (DiscountType $type) => $type->value, DiscountType::cases()))],
-            'value' => [$required, 'numeric', 'min:0'],
+            'value' => [$valuePresence, 'numeric', 'min:0', function (string $attribute, mixed $value, \Closure $fail) use ($request, $currentType): void {
+                $type = $request->input('type', $currentType?->value);
+                if ($type === DiscountType::Percentage->value && (float) $value > 100) {
+                    $fail('Yüzde indirimi 100 değerini aşamaz.');
+                }
+                if ($type === DiscountType::FreeShipping->value && (float) $value !== 0.0) {
+                    $fail('Ücretsiz kargo indiriminin değeri 0 olmalıdır.');
+                }
+            }],
             'status' => ['sometimes', 'string', 'in:'.implode(',', array_map(fn (DiscountStatus $status) => $status->value, DiscountStatus::cases()))],
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after:starts_at'],
@@ -142,16 +199,37 @@ class AdminDiscountController extends Controller
             'type' => $discount->type->value,
             'value' => $discount->value,
             'status' => $discount->status->value,
+            'availability' => $this->availability($discount),
             'starts_at' => $discount->starts_at?->toIso8601String(),
             'ends_at' => $discount->ends_at?->toIso8601String(),
             'usage_limit' => $discount->usage_limit,
             'usage_count' => $discount->usage_count,
             'minimum_purchase' => $discount->minimum_purchase,
+            'created_at' => $discount->created_at?->toIso8601String(),
+            'updated_at' => $discount->updated_at?->toIso8601String(),
             'conditions' => $discount->conditions->map(fn ($condition): array => [
                 'type' => $condition->type->value,
                 'operator' => $condition->operator,
                 'value' => $condition->value,
             ])->values(),
         ];
+    }
+
+    private function availability(Discount $discount): string
+    {
+        if ($discount->status === DiscountStatus::Inactive) {
+            return 'inactive';
+        }
+        if ($discount->starts_at?->isFuture()) {
+            return 'scheduled';
+        }
+        if ($discount->ends_at?->isPast()) {
+            return 'expired';
+        }
+        if ($discount->usage_limit !== null && $discount->usage_count >= $discount->usage_limit) {
+            return 'usage_limit_reached';
+        }
+
+        return 'active';
     }
 }

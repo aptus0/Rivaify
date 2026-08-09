@@ -148,10 +148,13 @@ class AdminProductController extends Controller
                 'draft' => ProductStatus::Draft,
                 'archive' => ProductStatus::Archived,
             };
-            $products->each(fn (Product $product) => $product->update([
-                'status' => $status,
-                'published_at' => $status === ProductStatus::Active ? now() : null,
-            ]));
+            $products->each(function (Product $product) use ($status): void {
+                $product->update([
+                    'status' => $status,
+                    'published_at' => $status === ProductStatus::Active ? now() : null,
+                ]);
+                $product->variants()->update(['status' => $status]);
+            });
         }
 
         return response()->json(['data' => ['updated_count' => $products->count()]]);

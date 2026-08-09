@@ -15,6 +15,7 @@ use Modules\Commerce\Enums\Payment\PaymentStatus;
 use Modules\Commerce\Models\Catalog\Product;
 use Modules\Commerce\Models\Checkout\CheckoutSession;
 use Modules\Commerce\Models\Inventory\InventoryLevel;
+use Modules\Commerce\Models\Inventory\InventoryReservation;
 use Modules\Commerce\Models\Order\Order;
 use Modules\Commerce\Models\Payment\Payment;
 use Modules\Commerce\Models\Payment\WebhookEvent;
@@ -23,6 +24,7 @@ use Modules\Commerce\Services\Cart\CartManager;
 use Modules\Commerce\Services\Checkout\CheckoutManager;
 use Modules\Commerce\Services\Customer\CustomerManager;
 use Modules\Commerce\Services\Inventory\InventoryManager;
+use Modules\Commerce\Services\Order\OrderManager;
 use Modules\Commerce\Services\Payment\PaymentManager;
 use Modules\Commerce\Services\Payment\WebhookInbox;
 use Modules\Commerce\Services\Payment\WebhookProcessor;
@@ -57,6 +59,12 @@ class WebhookProcessorTest extends TestCase
         $this->assertNotNull($payment->fresh()->order_id);
         $this->assertSame(4, $level->fresh()->available_quantity);
         $this->assertSame(0, $level->fresh()->reserved_quantity);
+
+        $order = Order::query()->sole();
+        app(OrderManager::class)->cancel($order);
+        app(OrderManager::class)->cancel($order->fresh());
+        $this->assertSame(5, $level->fresh()->available_quantity);
+        $this->assertSame('restocked', InventoryReservation::query()->sole()->status->value);
     }
 
     public function test_webhook_endpoint_deduplicates_inbox_records_and_queues_only_the_first_delivery(): void

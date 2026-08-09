@@ -13,7 +13,10 @@ use Modules\Commerce\Exceptions\Checkout\InvalidCheckoutTransitionException;
 use Modules\Commerce\Models\Checkout\CheckoutSession;
 use Modules\Commerce\Models\Order\OrderNotificationOutbox;
 use Modules\Commerce\Models\Payment\Payment;
+use Modules\Commerce\Services\Analytics\StorefrontEventRecorder;
 use Modules\Commerce\Services\Discount\DiscountEngine;
+use Modules\Commerce\Services\Finance\FinanceLedger;
+use Modules\Commerce\Services\Fulfillment\FulfillmentManager;
 use Modules\Commerce\Services\Inventory\InventoryManager;
 use Modules\Commerce\Services\Order\OrderCreator;
 use Modules\Commerce\Services\Order\OrderTimeline;
@@ -33,12 +36,15 @@ class CheckoutOrchestrator
         private readonly InventoryManager $inventory,
         private readonly PaymentManager $payments,
         private readonly OrderCreator $orders,
+        private readonly StorefrontEventRecorder $storefrontEvents,
         private readonly OrderTimeline $timeline,
         private readonly DiscountEngine $discounts,
         private readonly PricingEngine $pricing,
         private readonly ShippingEngine $shipping,
         private readonly TaxEngine $taxes,
         private readonly IdempotencyService $idempotency,
+        private readonly FinanceLedger $finance,
+        private readonly FulfillmentManager $fulfillments,
     ) {}
 
     public function pay(
@@ -48,6 +54,15 @@ class CheckoutOrchestrator
         string $idempotencyKey,
     ): Payment {
         $this->assertCheckoutBelongsToCurrentStore($checkout);
+        if ($checkout->status === CheckoutState::Payment) {
+            $existing = Payment::query()->where('checkout_id', $checkout->id)
+                ->where('provider', mb_strtolower(trim($provider)))
+                ->where('status', PaymentStatus::Pending->value)
+                ->latest('id')->first();
+            if ($existing !== null && isset($existing->metadata['iframe_url'])) {
+                return $existing;
+            }
+        }
         $record = $this->idempotency->claim($idempotencyKey, 'checkout_payment', [
             'checkout' => $checkout->ulid,
             'provider' => mb_strtolower(trim($provider)),
@@ -62,7 +77,10 @@ class CheckoutOrchestrator
 
         try {
             $checkout = $this->validateReadyForPayment($checkout);
-            $this->inventory->reserveForCheckout($checkout);
+            // Keep the stock hold alive for the full hosted-payment window.
+            // PayTR's iframe may legitimately remain open longer than the
+            // inventory service's generic 15-minute default.
+            $this->inventory->reserveForCheckout($checkout, $this->reservationTtlMinutes($provider));
             $reservationCreated = true;
             $checkout = $this->enterPaymentState($checkout);
             $payment = $this->payments->createPayment($checkout, $provider, $paymentMethodType);
@@ -91,7 +109,7 @@ class CheckoutOrchestrator
 
     public function completePaidPayment(Payment $payment): Payment
     {
-        return DB::transaction(function () use ($payment) {
+        $payment = DB::transaction(function () use ($payment) {
             $payment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
             if ($payment->status !== PaymentStatus::Paid) {
                 throw new \InvalidArgumentException('Only paid payments can complete a checkout.');
@@ -110,10 +128,20 @@ class CheckoutOrchestrator
                 throw new InvalidCheckoutTransitionException('Paid payment does not belong to a processable checkout.');
             }
 
+            // A provider callback can arrive after the original hold expired.
+            // Re-acquire (or extend) every tracked item atomically before an
+            // order is created; commitForCheckout then verifies the complete
+            // reservation set instead of silently succeeding with zero rows.
+            $this->inventory->reserveForCheckout(
+                $checkout,
+                $this->reservationTtlMinutes($payment->provider),
+            );
             $order = $this->orders->create($checkout);
             $this->inventory->commitForCheckout($checkout);
             $payment->update(['order_id' => $order->id]);
             $order->update(['payment_status' => OrderPaymentStatus::Paid]);
+            $this->finance->recordSale($order);
+            $this->fulfillments->createForOrder($order->load('items'));
             OrderNotificationOutbox::query()->firstOrCreate([
                 'order_id' => $order->id,
                 'type' => 'customer_payment_confirmation',
@@ -138,6 +166,10 @@ class CheckoutOrchestrator
 
             return $payment->refresh();
         });
+
+        $this->storefrontEvents->recordPurchase($payment);
+
+        return $payment;
     }
 
     public function failPayment(Payment $payment): Payment
@@ -246,5 +278,14 @@ class CheckoutOrchestrator
         if ($checkout->store_id !== $this->currentStore->id()) {
             throw new \InvalidArgumentException('Checkout does not belong to the current store.');
         }
+    }
+
+    private function reservationTtlMinutes(string $provider): int
+    {
+        if (mb_strtolower(trim($provider)) !== 'paytr') {
+            return 15;
+        }
+
+        return max(15, min(60, (int) config('commerce.payments.paytr.timeout', 30) + 5));
     }
 }

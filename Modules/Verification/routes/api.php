@@ -11,10 +11,14 @@ Route::middleware(['auth:sanctum', 'store.context'])->group(function () {
 });
 
 // Rivaify Admin — deliberately outside store.context (brief §11: admin
-// review is cross-tenant, not "inside" any one merchant's store).
+// review is cross-tenant, not "inside" any one merchant's store). Public
+// internal host access is allowed, but every endpoint stays behind staff
+// auth + Rivaify admin RBAC.
 Route::middleware(['auth:sanctum', 'rivaify.admin'])->prefix('admin')->group(function () {
     Route::get('/verification-requests', [VerificationReviewController::class, 'index']);
     Route::get('/verification-requests/{verificationRequest}', [VerificationReviewController::class, 'show']);
+    Route::get('/verification-requests/{verificationRequest}/documents/{document}/view', [VerificationReviewController::class, 'viewDocument']);
+    Route::post('/verification-requests/{verificationRequest}/sensitive-fields/reveal', [VerificationReviewController::class, 'revealSensitiveField']);
     Route::post('/verification-requests/{verificationRequest}/approve', [VerificationReviewController::class, 'approve']);
     Route::post('/verification-requests/{verificationRequest}/reject', [VerificationReviewController::class, 'reject']);
 });

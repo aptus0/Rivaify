@@ -8,10 +8,12 @@ use Illuminate\Http\Request;
 use Modules\Commerce\Exceptions\Payment\PaymentGatewayNotConfiguredException;
 use Modules\Commerce\Jobs\Payment\ProcessPaymentWebhook;
 use Modules\Commerce\Services\Payment\WebhookInbox;
+use Modules\Commerce\Services\Payment\WebhookProcessor;
+use Symfony\Component\HttpFoundation\Response;
 
 class PaymentWebhookController extends Controller
 {
-    public function receive(Request $request, string $provider, WebhookInbox $inbox): JsonResponse
+    public function receive(Request $request, string $provider, WebhookInbox $inbox, WebhookProcessor $processor): Response
     {
         try {
             $event = $inbox->receive($provider, $request->all(), $this->headers($request));
@@ -21,6 +23,10 @@ class PaymentWebhookController extends Controller
             return response()->json(['message' => 'invalid_payment_webhook'], 400);
         }
 
+        if ($provider === 'paytr') {
+            if ($event->status !== 'processed') $processor->process($event);
+            return response('OK', 200)->header('Content-Type', 'text/plain');
+        }
         if ($event->wasRecentlyCreated) {
             ProcessPaymentWebhook::dispatch($event->id);
         }
